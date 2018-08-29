@@ -1,7 +1,7 @@
 # Личный проект «Кэндишоп» [![Build status][travis-image]][travis-url]
 
 * Студент: [Alena Kazarina](https://up.htmlacademy.ru/javascript/15/user/562487).
-* Наставник: `Неизвестно`.
+* Наставник: `Александр Малинов`.
 
 ---
 
