@@ -1,7 +1,38 @@
 'use strict';
 
 //  data
-var NAMES = [
+var PATH = './img/cards/';
+var ImgSrc = [
+  'gum-cedar.jpg',
+  'gum-chile.jpg',
+  'gum-eggplant.jpg',
+  'gum-mustard.jpg',
+  'gum-portwine.jpg',
+  'gum-wasabi.jpg',
+  'ice-cucumber.jpg',
+  'ice-eggplant.jpg',
+  'ice-garlic.jpg',
+  'ice-italian.jpg',
+  'ice-mushroom.jpg',
+  'ice-pig.jpg',
+  'marmalade-beer.jpg',
+  'marmalade-caviar.jpg',
+  'marmalade-corn.jpg',
+  'marmalade-new-year.jpg',
+  'marmalade-sour.jpg',
+  'marshmallow-bacon.jpg',
+  'marshmallow-beer.jpg',
+  'marshmallow-shrimp.jpg',
+  'marshmallow-spicy.jpg',
+  'marshmallow-wine.jpg',
+  'soda-bacon.jpg',
+  'soda-celery.jpg',
+  'soda-cob.jpg',
+  'soda-garlic.jpg',
+  'soda-peanut-grapes.jpg',
+  'soda-russian.jpg'
+];
+var Name = [
   'Чесночные сливки',
   'Огуречный педант',
   'Молочная хрюша',
@@ -31,7 +62,7 @@ var NAMES = [
   'Бельгийское пенное',
   'Острый язычок'
 ];
-var CONTENTS = [
+var Content = [
   'молоко',
   'сливки',
   'вода',
@@ -52,9 +83,13 @@ var CONTENTS = [
   'виллабаджо'
 ];
 
-//  random data
-function getName(items) {
+//  randomize data
+function getString(items, string) {
   var index = getNumber(items.length - 1);
+  if (string === 'picture') {
+    var path = PATH + items[index];
+    return path;
+  }
   return items[index];
 }
 function getFromRange(min, max) {
@@ -82,18 +117,19 @@ function createGoods(count) {
   var goods = [];
   for (var i = 0; i < count; i++) {
     goods.push({
-      name: getName(NAMES),
+      name: getString(Name),
+      picture: getString(ImgSrc, 'picture'),
       amount: getNumber(20),
-      price: getNumber(500),
-      weight: getNumber(500),
+      price: getFromRange(100, 1500),
+      weight: getFromRange(30, 300),
       rating: {
-        value: getNumber(5),
+        value: getFromRange(1, 5),
         number: getFromRange(10, 900)
       },
       nutritionFacts: {
         sugar: !getNumber(1),
         energy: getFromRange(70, 500),
-        contents: getContents(CONTENTS)
+        contents: getContents(Content)
       }
     });
   }
@@ -106,6 +142,10 @@ function createCard(item) {
   var content = template.cloneNode(true);
   //  availability
   checkAvailability(content, item);
+  //  picture
+  var picture = content.querySelector('.card__img');
+  picture.src = item.picture;
+  picture.alt = item.name;
   //  name
   content.querySelector('.card__title').textContent = item.name;
   //  price
@@ -166,6 +206,10 @@ function checkNutrition(element, good) {
 function createGoodCard(item) {
   var template = document.querySelector('#card-order').content.querySelector('.goods_card');
   var content = template.cloneNode(true);
+  //  picture
+  var picture = content.querySelector('.card-order__img');
+  picture.src = item.picture;
+  picture.alt = item.name;
   //  name
   content.querySelector('.card-order__title').textContent = item.name;
   //  price
@@ -192,10 +236,10 @@ function renderCards(count, block) {
 //  catalog
 var catalogCards = document.querySelector('.catalog__cards');
 catalogCards.classList.remove('catalog__cards--load');
-catalogCards.querySelector('.catalog__load').style.display = 'none';
+catalogCards.querySelector('.catalog__load').classList.add('visually-hidden');
 catalogCards.appendChild(renderCards(26, 'catalog'));
 
-//  cart
+//  cart-order
 var goodsCards = document.querySelector('.goods__cards');
 goodsCards.classList.remove('goods__cards--empty');
 goodsCards.querySelector('.goods__card-empty').style.display = 'none';
