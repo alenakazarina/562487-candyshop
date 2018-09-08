@@ -19,7 +19,9 @@
 }
 
 /*global styles*/
-
+html, body {
+  overflow-x: hidden;
+}
 body {
   position: relative;
   font-family: "OpenSans", Arial, sans-serif;
@@ -1352,4 +1354,3 @@ body {
 .modal__message {
   padding-bottom: 0;
 }
-
