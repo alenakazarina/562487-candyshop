@@ -162,6 +162,8 @@ function createCard(item) {
 }
 function checkAvailability(element, good) {
   element.classList.remove('card--in-stock');
+  element.classList.remove('card--little');
+  element.classList.remove('card--soon');
   if (good.amount > 5) {
     element.classList.add('card--in-stock');
   }
@@ -174,6 +176,10 @@ function checkAvailability(element, good) {
 }
 function checkRating(element, good) {
   var ratingElement = element.querySelector('.stars__rating');
+  ratingElement.classList.remove('stars__rating--one');
+  ratingElement.classList.remove('stars__rating--two');
+  ratingElement.classList.remove('stars__rating--three');
+  ratingElement.classList.remove('stars__rating--four');
   ratingElement.classList.remove('stars__rating--five');
   switch (good.rating.value) {
     case 1:
