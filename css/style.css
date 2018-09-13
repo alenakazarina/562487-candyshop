@@ -613,10 +613,10 @@ body {
 }
 .card__btn-favorite:focus {
   background-color: #6e58d9;
-  transition: background-color 0.2s ease
+  transition: background-color 0.2s ease;
 }
 .card__btn-favorite--selected {
-  background-color: #8269ff
+  background-color: #8269ff;
 }
 .card__btn {
   display: flex;
@@ -1354,4 +1354,3 @@ body {
 .modal__message {
   padding-bottom: 0;
 }
-
