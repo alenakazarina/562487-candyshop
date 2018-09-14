@@ -218,6 +218,7 @@ function createGoodCard(name, imgSrc, price) {
   priceElement.textContent = price + ' ₽';
   return content;
 }
+
 function renderCards(items, block) {
   var fragment = document.createDocumentFragment();
   if (block === 'catalog') {
@@ -233,111 +234,21 @@ function renderCards(items, block) {
   return fragment;
 }
 
-//  клик на каталоге
-function onCatalogClick(evt) {
-  evt.preventDefault();
-  var target = evt.target;
-  var targetCard = getClickCard(target, 3);
-  var index = getCardIndex(targetCard, 'catalog');
-  //  добавить
-  if (target.classList.contains('card__btn')) {
-    if (targetCard.classList.contains('card--soon')) {
-      return;
-    }
-    var good = goodsList[index];
-    order.total += good.price;
-    order.count++;
-    checkHeaderCart();
-    addToOrder(good);
-    goodsList[index].amount--;
-    checkAvailability(targetCard, good);
-  }
-  //  фаворит
-  if (target.classList.contains('card__btn-favorite')) {
-    toggleFavourite(targetCard);
-  }
-  //  состав
-  if (target.classList.contains('card__btn-composition')) {
-    toggleComposition(targetCard);
-  }
-}
-//  добавить в корзину
-function addToOrder(good) {
-  //  если уже есть в заказе, увеличиваем количество и не создаем новый
+function updateOrder(good) {
+  //  если есть в заказе
   var index = checkInOrder(good);
   if (index !== undefined) {
     goodsCards.querySelectorAll('.card-order__count')[index].value++;
     showTotal();
     return;
   }
-  //  добавляем в заказ
+  //  если нет в заказе
   order.list.push(good);
-  //  создаем карточку, ставим count
-  var goodCard = createGoodCard(good.name, good.picture, good.price);
-  goodCard.querySelector('.card-order__count').value = 1;
+  showGoodsCards(good);
   showTotal();
   hideEmptyCart();
-  goodsCards.appendChild(goodCard);
 }
 
-//  клик на корзине
-function onOrderClick(evt) {
-  evt.preventDefault();
-  var target = evt.target;
-  var targetCard = getClickCard(target, 3);
-  var index = getCardIndex(targetCard, 'cart');
-  var good = order.list[index];
-  var id = good.id;
-  //  клик по close
-  if (target.classList.contains('card-order__close')) {
-    targetCard = getClickCard(target, 1);
-    index = getCardIndex(targetCard, 'cart');
-    good = order.list[index];
-    id = good.id;
-    var count = targetCard.querySelector('.card-order__count').value;
-    order.total -= good.price * count;
-    order.count -= count;
-    checkHeaderCart();
-    removeFromOrder(good);
-    goodsCards.removeChild(targetCard);
-    goodsList[id].amount += parseInt(count, 10);
-    checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
-    if (order.count === 0) {
-      hideTotal();
-      showEmptyCart();
-      return;
-    }
-    showTotal();
-    return;
-  }
-  //  клик увеличить
-  if (target.classList.contains('card-order__btn--increase')) {
-    if (goodsList[id].amount === 0) {
-      return;
-    }
-    goodsList[id].amount--;
-    order.count++;
-    order.total += good.price;
-    showTotal();
-    checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
-    targetCard.querySelector('.card-order__count').value++;
-    return;
-  }
-  //  клик уменьшить
-  if (target.classList.contains('card-order__btn--decrease')) {
-    if (targetCard.querySelector('.card-order__count').value === '0') {
-      targetCard.querySelector('.card-order__count').value = '0';
-      return;
-    }
-    goodsList[id].amount++;
-    order.count--;
-    order.total -= good.price;
-    showTotal();
-    checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
-    targetCard.querySelector('.card-order__count').value--;
-    return;
-  }
-}
 function checkInOrder(good) {
   for (var i = 0; i < order.list.length; i++) {
     if (order.list[i].id === good.id) {
@@ -346,13 +257,7 @@ function checkInOrder(good) {
   }
   return index;
 }
-function removeFromOrder(good) {
-  order.list = order.list.filter(function (item) {
-    return item !== good;
-  });
-}
 
-//  найти карточку, в которой произошел клик
 function getClickCard(item, count) {
   var parent = item.parentNode;
   while (count !== 1) {
@@ -362,7 +267,6 @@ function getClickCard(item, count) {
   return parent;
 }
 
-//  найти индекс карточки
 function getCardIndex(card, block) {
   var index = 0;
   var cardsList = [];
@@ -380,7 +284,28 @@ function getCardIndex(card, block) {
   return index;
 }
 
-function checkHeaderCart() {
+function addGoodToOrder(index) {
+  goodsList[index].amount--;
+  order.total += goodsList[index].price;
+  order.count++;
+}
+
+function removeGoodFromOrder(good) {
+  goodsList[good.id].amount++;
+  order.total -= good.price;
+  order.count--;
+}
+
+function removeGoodsFromOrderCloseClick(good, count) {
+  goodsList[good.id].amount += count;
+  order.total -= good.price * count;
+  order.count -= count;
+  order.list = order.list.filter(function (item) {
+    return item !== good;
+  });
+}
+
+function updateHeaderCart() {
   var headerBasket = document.querySelector('.main-header__basket');
   if (order.count === 0) {
     headerBasket.textContent = 'В корзине ничего нет';
@@ -400,12 +325,23 @@ function toggleFavourite(card) {
   card.classList.toggle('favorite');
   card.querySelector('.card__btn-favorite').classList.toggle('card__btn-favorite--selected');
 }
+
 function toggleComposition(card) {
   card.querySelector('.card__composition').classList.toggle('card__composition--hidden');
 }
+
+function showGoodsCards(good) {
+  var goodCard = createGoodCard(good.name, good.picture, good.price);
+  goodCard.querySelector('.card-order__count').value = 1;
+  goodsCards.appendChild(goodCard);
+}
+
 function showTotal() {
   var total = goodsCards.nextElementSibling;
   var totals = total.querySelector('.goods__total-count').childNodes;
+  if (order.count === 0) {
+    totals[0].textContent = 'Итого за ' + order.count + ' товаров';
+  }
   if (order.count === 1) {
     totals[0].textContent = 'Итого за ' + order.count + ' товар';
   }
@@ -418,6 +354,7 @@ function showTotal() {
   totals[1].textContent = order.total + ' ₽';
   total.classList.remove('visually-hidden');
 }
+
 function hideTotal() {
   var total = goodsCards.nextElementSibling;
   var totals = total.querySelector('.goods__total-count').childNodes;
@@ -425,22 +362,26 @@ function hideTotal() {
   totals[1].textContent = '0 ₽';
   total.classList.add('visually-hidden');
 }
+
 function showEmptyCart() {
   goodsCards.classList.add('goods__cards--empty');
   goodsCards.querySelector('.goods__card-empty').style.display = 'block';
   disableOrderInputs();
 }
+
 function hideEmptyCart() {
   goodsCards.classList.remove('goods__cards--empty');
   goodsCards.querySelector('.goods__card-empty').style.display = 'none';
   goodsCards.nextElementSibling.querySelector('.goods__order-link').classList.remove('goods__order-link--disabled');
   removeDisabledOrderInputs();
 }
+
 function hideLoad() {
   catalogCards.classList.remove('catalog__cards--load');
   var catalogLoad = catalogCards.querySelector('.catalog__load');
   catalogCards.removeChild(catalogLoad);
 }
+
 function disableOrderInputs() {
   var items = document.querySelectorAll('.contact-data__inputs input');
   items.forEach(function (item) {
@@ -471,7 +412,89 @@ hideLoad();
 showEmptyCart();
 catalogCards.appendChild(contentCards);
 
-
-// listeners
+//  listeners
 catalogCards.addEventListener('click', onCatalogClick);
 goodsCards.addEventListener('click', onOrderClick);
+
+//  handlers
+function onCatalogClick(evt) {
+  evt.preventDefault();
+  var target = evt.target;
+  var targetCard = getClickCard(target, 3);
+  //  добавить
+  if (target.classList.contains('card__btn')) {
+    if (targetCard.classList.contains('card--soon')) {
+      return;
+    }
+    var index = getCardIndex(targetCard, 'catalog');
+    addGoodToOrder(index);
+    updateOrder(goodsList[index]);
+    updateHeaderCart();
+    checkAvailability(targetCard, goodsList[index]);
+  }
+  //  фаворит
+  if (target.classList.contains('card__btn-favorite')) {
+    toggleFavourite(targetCard);
+  }
+  //  состав
+  if (target.classList.contains('card__btn-composition')) {
+    toggleComposition(targetCard);
+  }
+}
+
+function onOrderClick(evt) {
+  evt.preventDefault();
+  var target = evt.target;
+  var targetCard = getClickCard(target, 3);
+  var index = getCardIndex(targetCard, 'cart');
+  var good = order.list[index];
+  //  клик по close
+  if (target.classList.contains('card-order__close')) {
+    targetCard = getClickCard(target, 1);
+    index = getCardIndex(targetCard, 'cart');
+    good = order.list[index];
+    var count = parseInt(targetCard.querySelector('.card-order__count').value, 10);
+    goodsCards.removeChild(targetCard);
+    removeGoodsFromOrderCloseClick(good, count);
+    updateHeaderCart();
+    checkAvailability(catalogCards.querySelectorAll('.catalog__card')[good.id], good);
+    if (order.list.length === 0) {
+      hideTotal();
+      showEmptyCart();
+      return;
+    }
+    showTotal();
+    return;
+  }
+  //  клик увеличить
+  if (target.classList.contains('card-order__btn--increase')) {
+    if (goodsList[good.id].amount === 0) {
+      return;
+    }
+    addGoodToOrder(good.id);
+    showTotal();
+    updateHeaderCart();
+    checkAvailability(catalogCards.querySelectorAll('.catalog__card')[good.id], good);
+    targetCard.querySelector('.card-order__count').value++;
+    return;
+  }
+  //  клик уменьшить
+  if (target.classList.contains('card-order__btn--decrease')) {
+    targetCard.querySelector('.card-order__count').value--;
+    if (parseInt(targetCard.querySelector('.card-order__count').value, 10) === 0) {
+      goodsCards.removeChild(targetCard);
+      removeGoodsFromOrderCloseClick(good, 1);
+    } else {
+      removeGoodFromOrder(good);
+    }
+    updateHeaderCart();
+    checkAvailability(catalogCards.querySelectorAll('.catalog__card')[good.id], good);
+    if (order.list.length === 0) {
+      hideTotal();
+      showEmptyCart();
+      return;
+    }
+    showTotal();
+    return;
+  }
+}
