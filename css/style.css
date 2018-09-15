@@ -1285,6 +1285,12 @@ body {
   display: flex;
   justify-content: space-between;
 }
+.range__price {
+  position: relative;
+  padding-top: 6px;
+  display: block;
+  color: #6e58d9;
+}
 .range__price::after {
   position: absolute;
   content: ' ₽';
@@ -1295,15 +1301,7 @@ body {
 .range__price--max {
   padding-right: 20px;
 }
-.range__price {
-  max-width: 90px;
-  margin-top: 20px;
-  padding: 5px;
-  position: relative;
-  padding-top: 6px;
-  display: block;
-  color: #6e58d9;
-}
+
 /*modal*/
 
 .modal {
