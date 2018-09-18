@@ -1269,6 +1269,7 @@ body {
 }
 .range__btn--left {
   left: 15%;
+  z-index: 1;
 }
 .range__btn--right {
   right: 15%;
