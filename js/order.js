@@ -58,32 +58,32 @@ function checkLuhn(cardInput) {
 }
 //  -------------
 //  helpers
-function getCardData() {
-  // var numberField = document.querySelector('#payment__card-number');
-  // var dataField = document.querySelector('#payment__card-date');
-  // var cvcField = document.querySelector('#payment__card-cvc');
-  // var holderField = document.querySelector('#payment__cardholder');
-  var paymentData = [];
-  document.querySelectorAll('.payment__card-wrap input').forEach(function (item) {
-    paymentData.push(item.value);
-  });
-  return paymentData;
-}
-function setCardData() {
-  var paymentData = getCardData();
-  card.number = paymentData[0];
-  card.date = paymentData[1];
-  card.cvc = paymentData[2];
-  card.holder = paymentData[3];
-}
-function changeStatus() {
-  var cardStatus = document.querySelector('.payment__card-status');
-  if (card.isValid) {
-    cardStatus.textContent = 'Одобрен';
-    return;
-  }
-  cardStatus.textContent = 'Неизвестен';
-}
+// function getCardData() {
+//   // var numberField = document.querySelector('#payment__card-number');
+//   // var dataField = document.querySelector('#payment__card-date');
+//   // var cvcField = document.querySelector('#payment__card-cvc');
+//   // var holderField = document.querySelector('#payment__cardholder');
+//   var paymentData = [];
+//   document.querySelectorAll('.payment__card-wrap input').forEach(function (item) {
+//     paymentData.push(item.value);
+//   });
+//   return paymentData;
+// }
+// function setCardData() {
+//   var paymentData = getCardData();
+//   card.number = paymentData[0];
+//   card.date = paymentData[1];
+//   card.cvc = paymentData[2];
+//   card.holder = paymentData[3];
+// }
+// function changeStatus() {
+//   var cardStatus = document.querySelector('.payment__card-status');
+//   if (card.isValid) {
+//     cardStatus.textContent = 'Одобрен';
+//     return;
+//   }
+//   cardStatus.textContent = 'Неизвестен';
+// }
 function disablePaymentInputs() {
   document.querySelectorAll('.payment__card-wrap input').forEach(function (item) {
     item.disabled = true;
@@ -99,17 +99,17 @@ function onCardNumberChange(evt) {
   var target = evt.target;
   checkLuhn(target);
 }
-function onOrderFormInvalid(evt) {
+function onOrderFormInvalid() {
 //  handling invalid
 }
 // start
-var card = {
-  number: 0,
-  date: ' ',
-  cvc: 0,
-  holder: ' ',
-  isValid: false
-};
+// var card = {
+//   number: 0,
+//   date: ' ',
+//   cvc: 0,
+//   holder: ' ',
+//   isValid: false
+// };
 var cardNumberInput = document.querySelector('#payment__card-number');
 var orderForm = document.querySelector('.buy form');
 //  listeners
