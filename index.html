@@ -144,7 +144,7 @@
     <section class="buy">
       <h2 class="visually-hidden">Оформление покупки</h2>
 
-      <form action="https://js.dump.academy/code-and-magick" method="post" type="multipart/form-data">
+      <form class="buy__form">
         <section class="goods">
           <div class="goods__wrap container">
             <h2 class="group-title goods__title" id="basket">Твои покупки</h2>
@@ -175,17 +175,17 @@
 
               <ul class="contact-data__inputs">
                 <li class="text-input contact-data__input-wrap">
-                  <input type="text" class="text-input__input" name="name" id="contact-data__name" placeholder="Имя" disabled>
+                  <input type="text" class="text-input__input" name="name" id="contact-data__name" placeholder="Имя" required disabled>
                   <label for="contact-data__name" class="text-input__label">Имя</label>
                 </li>
 
                 <li class="text-input contact-data__input-wrap">
-                  <input type="text" class="text-input__input" name="tel" id="contact-data__tel" placeholder="Телефон" disabled>
+                  <input type="text" class="text-input__input" name="tel" id="contact-data__tel" placeholder="Телефон" required disabled>
                   <label for="contact-data__tel" class="text-input__label">Телефон</label>
                 </li>
 
                 <li class="text-input contact-data__input-wrap">
-                  <input type="text" class="text-input__input" name="email" id="contact-data__email" placeholder="Почта" disabled>
+                  <input type="email" class="text-input__input" name="email" id="contact-data__email" placeholder="Почта" disabled>
                   <label for="contact-data__email" class="text-input__label">Почта</label>
                 </li>
 
@@ -215,7 +215,7 @@
                 <div class="payment__inputs">
                   <div class="payment__card-group">
                     <p class="text-input text-input--light payment__input-wrap payment__input-wrap--card-number">
-                      <input type="text" class="text-input__input" name="card-number" id="payment__card-number" placeholder="Номер карты" minlength="16" maxlength="16"required>
+                      <input type="text" class="text-input__input" name="card-number" id="payment__card-number" placeholder="Номер карты" minlength="16" maxlength="16" pattern="[0-9]{16}" required>
                       <label class="text-input__label" for="payment__card-number">Номер карты</label>
                     </p>
 
@@ -225,7 +225,7 @@
                     </p>
 
                     <p class="text-input text-input--light payment__input-wrap payment__input-wrap--cvc">
-                      <input type="text" class="text-input__input" name="card-cvc" id="payment__card-cvc" placeholder="CVC">
+                      <input type="text" class="text-input__input" name="card-cvc" id="payment__card-cvc" placeholder="CVC" required>
                       <label class="text-input__label text-input__label--lock" for="payment__card-cvc">CVC</label>
                     </p>
 
@@ -237,7 +237,7 @@
                     </p>
 
                     <div class="payment__card-status-wrap">
-                      <p class="payment__card-status-message">Статус карты: <span class="payment__card-status">Не определён</span></p>
+                      <p class="payment__card-status-message">Статус карты: <span class="payment__card-status">Неизвестен</span></p>
                       <p class="payment__error-message visually-hidden">Система определяет ошибку и пишет где ошибка под неправильным полем</p>
                     </div>
 
