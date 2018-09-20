@@ -1,10 +1,6 @@
 'use strict';
 
 (function () {
-  var MIN_PRICE = 94;
-  var MAX_PRICE = 1494;
-
-  //  render cards with ids
   function renderCards(ids) {
     var cards = document.querySelectorAll('.catalog__card');
     for (var i = 0; i < cards.length; i++) {
@@ -20,15 +16,16 @@
       item.style.display = 'block';
     });
   }
-  //  filter price
   function showCardsInPriceRange() {
     var prices = [];
     document.querySelectorAll('.card__price').forEach(function (item) {
       prices.push(parseInt(item.textContent.split(' ')[0], 10));
     });
     var ids = [];
+    var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
+    var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
     prices.forEach(function (price, index) {
-      if (price >= priceRange.min && price <= priceRange.max) {
+      if (price >= minPrice && price <= maxPrice) {
         ids.push(index);
       }
     });
@@ -40,51 +37,46 @@
     renderCards(ids);
     filterRangeCount.textContent = ids.length;
   }
-  //  handlers
-  function onRangeFilterMouseDown(evt) {
-    evt.preventDefault();
-    var target = evt.target;
-    var isMax = target.classList.contains('range__btn--right');
-    function onMouseMove(moveEvt) {
-      var buttonWidth = filterRangeMin.clientWidth;
-      var halfWidth = buttonWidth / 2;
-      var rangeWidth = filterRange.clientWidth;
-      var leftCoord = filterRange.offsetLeft + halfWidth;
-      var rightCoord = filterRange.offsetLeft + rangeWidth - halfWidth;
-      var minCoord = filterRangeMin.offsetLeft;
-      var maxCoord = filterRangeMax.offsetLeft;
-      var step = Math.round((MAX_PRICE - MIN_PRICE) / (rightCoord - leftCoord));
-      var shift = startPosition - moveEvt.clientX;
-      startPosition = moveEvt.clientX;
-      if (isMax) {
-        if (moveEvt.clientX < minCoord + buttonWidth * 2.5 || moveEvt.clientX >= rightCoord) {
-          shift = 0;
-        }
-        filterRangeFill.style.right = rangeWidth - halfWidth - target.offsetLeft - shift + 'px';
-        filterRangeMaxPrice.textContent = MIN_PRICE + target.offsetLeft * step;
-      } else {
-        if (moveEvt.clientX > maxCoord + halfWidth || moveEvt.clientX <= leftCoord) {
-          shift = 0;
-        }
-        filterRangeFill.style.left = target.offsetLeft - shift + 'px';
-        filterRangeMinPrice.textContent = MIN_PRICE + target.offsetLeft * step;
-      }
-      target.style.left = target.offsetLeft - shift + 'px';
+  // cb
+  function setMaxRange(targetBtn) {
+    var minCenterX = filterRangeMin.offsetLeft + BUTTON_HALF_WIDTH;
+    var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
+    filterRangeFill.style.right = (RANGE_WIDTH - targetCenterX) / RANGE_WIDTH * 100 + '%';
+    filterRangeMaxPrice.textContent = MIN_PRICE + targetCenterX * STEP;
+    var rightLimit = (targetCenterX >= MAX) ? true : false;
+    var leftLimit = (targetCenterX <= minCenterX + BUTTON_WIDTH) ? true : false;
+    if (leftLimit) {
+      var centerCoord = (minCenterX + BUTTON_WIDTH);
+      targetBtn.style.left = minCenterX + BUTTON_HALF_WIDTH + 'px';
+      filterRangeFill.style.right = (RANGE_WIDTH - minCenterX - BUTTON_WIDTH) / RANGE_WIDTH * 100 + '%';
+      filterRangeMaxPrice.textContent = MIN_PRICE + centerCoord * STEP;
     }
-    function onMouseUp() {
-      if (isMax) {
-        priceRange.max = parseInt(filterRangeMaxPrice.textContent, 10);
-      }
-      priceRange.min = parseInt(filterRangeMinPrice.textContent, 10);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      showCardsInPriceRange();
+    if (rightLimit) {
+      targetBtn.style.left = MAX + 'px';
+      filterRangeFill.style.right = 0;
+      filterRangeMaxPrice.textContent = MAX_PRICE;
     }
-    if (target.classList.contains('range__btn')) {
-      var startPosition = evt.clientX;
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+    showCardsInPriceRange();
+  }
+  function setMinRange(targetBtn) {
+    var maxCenterX = filterRangeMax.offsetLeft + BUTTON_HALF_WIDTH;
+    var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
+    filterRangeFill.style.left = targetCenterX / RANGE_WIDTH * 100 + '%';
+    filterRangeMinPrice.textContent = MIN_PRICE + targetCenterX * STEP;
+    var leftLimit = (targetCenterX <= MIN + BUTTON_HALF_WIDTH) ? true : false;
+    var rightLimit = (targetCenterX >= maxCenterX - BUTTON_WIDTH) ? true : false;
+    if (rightLimit) {
+      var centerCoord = maxCenterX - BUTTON_WIDTH;
+      targetBtn.style.left = maxCenterX - BUTTON_WIDTH - BUTTON_HALF_WIDTH + 'px';
+      filterRangeFill.style.left = maxCenterX - BUTTON_WIDTH + 'px';
+      filterRangeMinPrice.textContent = MIN_PRICE + centerCoord * STEP;
     }
+    if (leftLimit) {
+      targetBtn.style.left = MIN + 'px';
+      filterRangeFill.style.left = 0;
+      filterRangeMinPrice.textContent = MIN_PRICE;
+    }
+    showCardsInPriceRange();
   }
   //  range filter items
   var catalog = document.querySelector('.catalog__cards');
@@ -93,15 +85,32 @@
   var filterRangeMaxPrice = filterRange.querySelector('.range__price--max');
   var filterRangeCount = filterRange.querySelector('.range__count');
   var filterRangeFilter = filterRange.querySelector('.range__filter');
-  var filterRangeMax = filterRange.querySelector('.range__btn--right');
   var filterRangeMin = filterRange.querySelector('.range__btn--left');
+  var filterRangeMax = filterRange.querySelector('.range__btn--right');
   var filterRangeFill = filterRange.querySelector('.range__fill-line');
-  var priceRange = {
-    min: 100,
-    max: 1500
-  };
-  //  listeners range filter
-  filterRangeFilter.addEventListener('mousedown', onRangeFilterMouseDown);
+  var MIN_PRICE = 100;
+  var MAX_PRICE = 1500;
+  var BUTTON_WIDTH = filterRangeMin.clientWidth;
+  var BUTTON_HALF_WIDTH = BUTTON_WIDTH / 2;
+  var RANGE_WIDTH = filterRange.clientWidth;
+  var MIN = 0;
+  var MAX = RANGE_WIDTH - BUTTON_HALF_WIDTH * 2;
+  var STEP = Math.round((MAX_PRICE - MIN_PRICE) / MAX);
+
+  //  listeners
+  filterRangeFilter.addEventListener('mousedown', function (evt) {
+    evt.preventDefault();
+    var target = evt.target;
+    var maxRange = target.classList.contains('range__btn--right');
+    var minRange = target.classList.contains('range__btn--left');
+    if (maxRange) {
+      window.slider.init(setMaxRange, target);
+    } else if (minRange) {
+      window.slider.init(setMinRange, target);
+    } else {
+      return;
+    }
+  });
 
   //  favourites filter
   function onFilterFavsClick(evt) {
@@ -124,6 +133,7 @@
     window.filters.hideMessage();
     showAllCards();
   }
+
   var filterFavs = document.querySelector('#filter-favorite');
   var filterFavsCount = document.querySelector('#filter-favorite').nextElementSibling.nextElementSibling;
   //  listener favourites
