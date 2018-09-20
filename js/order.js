@@ -6,10 +6,10 @@
   function checkLuhn(cardInput) {
     var cardNumber = cardInput.value;
     var digits = cardNumber.split('');
-    digits.map(function (digit, index) {
-      digit = parseInt(digit, 10);
+    function getLuhnDigit(item) {
+      var digit = parseInt(item, 10);
       if (cardNumber.length % 2 === 0) {
-        if (index % 2 === 0) {
+        if (i % 2 === 0) {
           digit *= 2;
           if (digit > 9) {
             digit -= 9;
@@ -17,7 +17,7 @@
         }
         return digit;
       } else {
-        if (index % 2 !== 0) {
+        if (i % 2 !== 0) {
           digit *= 2;
           if (digit > 9) {
             digit -= 9;
@@ -25,10 +25,13 @@
         }
         return digit;
       }
-    });
-    var sum = 0;
+    }
     for (var i = 0; i < digits.length; i++) {
-      sum += digits[i];
+      digits[i] = getLuhnDigit(digits[i]);
+    }
+    var sum = 0;
+    for (var j = 0; j < digits.length; j++) {
+      sum += digits[j];
     }
     if (sum % 10 === 0) {
       return true;
