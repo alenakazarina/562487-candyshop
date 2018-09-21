@@ -1,43 +1,48 @@
 'use strict';
 
 (function () {
-  function renderCards(ids) {
-    var cards = document.querySelectorAll('.catalog__card');
-    for (var i = 0; i < cards.length; i++) {
-      cards[i].style.display = 'none';
-    }
-    for (var j = 0; j < ids.length; j++) {
-      var index = ids[j];
-      cards[index].style.display = 'block';
-    }
-  }
-  function showAllCards() {
-    document.querySelectorAll('.catalog__card').forEach(function (item) {
-      item.style.display = 'block';
-    });
-  }
-  function showCardsInPriceRange() {
-    var prices = [];
-    document.querySelectorAll('.card__price').forEach(function (item) {
-      prices.push(parseInt(item.textContent.split(' ')[0], 10));
-    });
-    var ids = [];
-    var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
-    var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
-    prices.forEach(function (price, index) {
-      if (price >= minPrice && price <= maxPrice) {
-        ids.push(index);
-      }
-    });
-    if (ids.length === 0) {
-      window.filters.showMessage();
+  var catalog = document.querySelector('.catalog__cards');
+  var filterRange = document.querySelector('.range');
+  var filterRangeMinPrice = filterRange.querySelector('.range__price--min');
+  var filterRangeMaxPrice = filterRange.querySelector('.range__price--max');
+  var filterRangeCount = filterRange.querySelector('.range__count');
+  var priceRangeFilter = filterRange.querySelector('.range__filter');
+  var filterRangeMin = filterRange.querySelector('.range__btn--left');
+  var filterRangeMax = filterRange.querySelector('.range__btn--right');
+  var filterRangeFill = filterRange.querySelector('.range__fill-line');
+  var MIN_PRICE = 100;
+  var MAX_PRICE = 1500;
+  var BUTTON_WIDTH = filterRangeMin.clientWidth;
+  var BUTTON_HALF_WIDTH = BUTTON_WIDTH / 2;
+  var RANGE_WIDTH = filterRange.clientWidth;
+  var MIN = 0;
+  var MAX = RANGE_WIDTH - BUTTON_HALF_WIDTH * 2;
+  var STEP = Math.round((MAX_PRICE - MIN_PRICE) / MAX);
+  var RANGE_OFFSET = priceRangeFilter.offsetLeft;
+
+  //  listeners
+  priceRangeFilter.addEventListener('mousedown', function (evt) {
+    evt.preventDefault();
+    var target = evt.target;
+    var downEvtPos = evt.clientX;
+    var maxRange = target.classList.contains('range__btn--right');
+    var minRange = target.classList.contains('range__btn--left');
+    if (maxRange) {
+      window.slider.init(setMaxRange, target);
+    } else if (minRange) {
+      window.slider.init(setMinRange, target);
     } else {
-      window.filters.hideMessage();
+      var activeBtn = getClosest(downEvtPos);
+      activeBtn.style.left = downEvtPos - BUTTON_HALF_WIDTH - RANGE_OFFSET + 'px';
+      var isMaxActive = activeBtn.classList.contains('range__btn--right');
+      if (isMaxActive) {
+        setMaxRange(activeBtn);
+      } else {
+        setMinRange(activeBtn);
+      }
     }
-    renderCards(ids);
-    filterRangeCount.textContent = ids.length;
-  }
-  // cb
+  });
+  //  cb
   function setMaxRange(targetBtn) {
     var minCenterX = filterRangeMin.offsetLeft + BUTTON_HALF_WIDTH;
     var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
@@ -78,39 +83,57 @@
     }
     showCardsInPriceRange();
   }
-  //  range filter items
-  var catalog = document.querySelector('.catalog__cards');
-  var filterRange = document.querySelector('.range');
-  var filterRangeMinPrice = filterRange.querySelector('.range__price--min');
-  var filterRangeMaxPrice = filterRange.querySelector('.range__price--max');
-  var filterRangeCount = filterRange.querySelector('.range__count');
-  var filterRangeFilter = filterRange.querySelector('.range__filter');
-  var filterRangeMin = filterRange.querySelector('.range__btn--left');
-  var filterRangeMax = filterRange.querySelector('.range__btn--right');
-  var filterRangeFill = filterRange.querySelector('.range__fill-line');
-  var MIN_PRICE = 100;
-  var MAX_PRICE = 1500;
-  var BUTTON_WIDTH = filterRangeMin.clientWidth;
-  var BUTTON_HALF_WIDTH = BUTTON_WIDTH / 2;
-  var RANGE_WIDTH = filterRange.clientWidth;
-  var MIN = 0;
-  var MAX = RANGE_WIDTH - BUTTON_HALF_WIDTH * 2;
-  var STEP = Math.round((MAX_PRICE - MIN_PRICE) / MAX);
-
-  //  listeners
-  filterRangeFilter.addEventListener('mousedown', function (evt) {
-    evt.preventDefault();
-    var target = evt.target;
-    var maxRange = target.classList.contains('range__btn--right');
-    var minRange = target.classList.contains('range__btn--left');
-    if (maxRange) {
-      window.slider.init(setMaxRange, target);
-    } else if (minRange) {
-      window.slider.init(setMinRange, target);
-    } else {
-      return;
+  function getClosest(position) {
+    var minPos = filterRangeMin.offsetLeft + RANGE_OFFSET;
+    var maxPos = filterRangeMax.offsetLeft + RANGE_OFFSET;
+    var half = (maxPos - minPos) / 2;
+    if (position >= maxPos) {
+      return filterRangeMax;
     }
-  });
+    if (position <= minPos) {
+      return filterRangeMin;
+    }
+    if (position + half < maxPos) {
+      return filterRangeMin;
+    }
+    return filterRangeMax;
+  }
+  function renderCards(ids) {
+    var cards = document.querySelectorAll('.catalog__card');
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].style.display = 'none';
+    }
+    for (var j = 0; j < ids.length; j++) {
+      var index = ids[j];
+      cards[index].style.display = 'block';
+    }
+  }
+  function showAllCards() {
+    document.querySelectorAll('.catalog__card').forEach(function (item) {
+      item.style.display = 'block';
+    });
+  }
+  function showCardsInPriceRange() {
+    var prices = [];
+    document.querySelectorAll('.card__price').forEach(function (item) {
+      prices.push(parseInt(item.textContent.split(' ')[0], 10));
+    });
+    var ids = [];
+    var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
+    var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
+    prices.forEach(function (price, index) {
+      if (price >= minPrice && price <= maxPrice) {
+        ids.push(index);
+      }
+    });
+    if (ids.length === 0) {
+      window.filters.showMessage();
+    } else {
+      window.filters.hideMessage();
+    }
+    renderCards(ids);
+    filterRangeCount.textContent = ids.length;
+  }
 
   //  favourites filter
   function onFilterFavsClick(evt) {

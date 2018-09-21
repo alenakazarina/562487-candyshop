@@ -3,6 +3,8 @@
 (function () {
   window.slider = {
     init: function (cb, target) {
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
       function onMouseMove(moveEvt) {
         var startPosition = target.offsetLeft;
         var shift = startPosition - moveEvt.clientX;
@@ -12,11 +14,10 @@
         cb(target);
       }
       function onMouseUp() {
+        cb(target);
         document.removeEventListener('mousemove', onMouseMove);
         document.removeEventListener('mouseup', onMouseUp);
       }
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
     }
   };
 })();
