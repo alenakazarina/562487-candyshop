@@ -10,161 +10,260 @@
   var filterRangeMin = filterRange.querySelector('.range__btn--left');
   var filterRangeMax = filterRange.querySelector('.range__btn--right');
   var filterRangeFill = filterRange.querySelector('.range__fill-line');
-  var MIN_PRICE = 100;
-  var MAX_PRICE = 1500;
+  var catalogForm = document.querySelector('.catalog__sidebar form');
+  // var foodTypeFilters = catalogForm.querySelectorAll('input[name=food-type]');
+  // var foodPropFilters = catalogForm.querySelectorAll('input[name=food-property]');
+  // var filterFavs = catalogForm.querySelector('#filter-favorite');
+  // var filterInStock = catalogForm.querySelector('#filter-availability');
+  // var sortFilters = catalogForm.querySelectorAll('input[name=sort]');
+  // var catalogSubmit = catalogForm.querySelector('.catalog__submit');
+
   var BUTTON_WIDTH = filterRangeMin.clientWidth;
   var BUTTON_HALF_WIDTH = BUTTON_WIDTH / 2;
   var RANGE_WIDTH = filterRange.clientWidth;
   var MIN = 0;
-  var MAX = RANGE_WIDTH - BUTTON_HALF_WIDTH * 2;
-  var STEP = Math.round((MAX_PRICE - MIN_PRICE) / MAX);
+  var MAX = RANGE_WIDTH - BUTTON_WIDTH;
   var RANGE_OFFSET = priceRangeFilter.offsetLeft;
-
-  //  listeners
-  priceRangeFilter.addEventListener('mousedown', function (evt) {
-    evt.preventDefault();
-    var target = evt.target;
-    var downEvtPos = evt.clientX;
-    var maxRange = target.classList.contains('range__btn--right');
-    var minRange = target.classList.contains('range__btn--left');
-    if (maxRange) {
-      window.slider.init(setMaxRange, target);
-    } else if (minRange) {
-      window.slider.init(setMinRange, target);
-    } else {
-      var activeBtn = getClosest(downEvtPos);
-      activeBtn.style.left = downEvtPos - BUTTON_HALF_WIDTH - RANGE_OFFSET + 'px';
-      var isMaxActive = activeBtn.classList.contains('range__btn--right');
-      if (isMaxActive) {
-        setMaxRange(activeBtn);
-      } else {
-        setMinRange(activeBtn);
+  var COORD_PERCENT = (MAX + BUTTON_HALF_WIDTH) / MAX * 100;
+  function getMinPrice(list) {
+    var minPrice = list[0].price;
+    list.forEach(function (item) {
+      if (item.price <= minPrice) {
+        minPrice = item.price;
       }
-    }
-  });
-  //  cb
-  function setMaxRange(targetBtn) {
-    var minCenterX = filterRangeMin.offsetLeft + BUTTON_HALF_WIDTH;
-    var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
-    filterRangeFill.style.right = (RANGE_WIDTH - targetCenterX) / RANGE_WIDTH * 100 + '%';
-    filterRangeMaxPrice.textContent = MIN_PRICE + targetCenterX * STEP;
-    var rightLimit = (targetCenterX >= MAX) ? true : false;
-    var leftLimit = (targetCenterX <= minCenterX + BUTTON_WIDTH) ? true : false;
-    if (leftLimit) {
-      var centerCoord = (minCenterX + BUTTON_WIDTH);
-      targetBtn.style.left = minCenterX + BUTTON_HALF_WIDTH + 'px';
-      filterRangeFill.style.right = (RANGE_WIDTH - minCenterX - BUTTON_WIDTH) / RANGE_WIDTH * 100 + '%';
-      filterRangeMaxPrice.textContent = MIN_PRICE + centerCoord * STEP;
-    }
-    if (rightLimit) {
-      targetBtn.style.left = MAX + 'px';
-      filterRangeFill.style.right = 0;
-      filterRangeMaxPrice.textContent = MAX_PRICE;
-    }
-    showCardsInPriceRange();
-  }
-  function setMinRange(targetBtn) {
-    var maxCenterX = filterRangeMax.offsetLeft + BUTTON_HALF_WIDTH;
-    var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
-    filterRangeFill.style.left = targetCenterX / RANGE_WIDTH * 100 + '%';
-    filterRangeMinPrice.textContent = MIN_PRICE + targetCenterX * STEP;
-    var leftLimit = (targetCenterX <= MIN + BUTTON_HALF_WIDTH) ? true : false;
-    var rightLimit = (targetCenterX >= maxCenterX - BUTTON_WIDTH) ? true : false;
-    if (rightLimit) {
-      var centerCoord = maxCenterX - BUTTON_WIDTH;
-      targetBtn.style.left = maxCenterX - BUTTON_WIDTH - BUTTON_HALF_WIDTH + 'px';
-      filterRangeFill.style.left = maxCenterX - BUTTON_WIDTH + 'px';
-      filterRangeMinPrice.textContent = MIN_PRICE + centerCoord * STEP;
-    }
-    if (leftLimit) {
-      targetBtn.style.left = MIN + 'px';
-      filterRangeFill.style.left = 0;
-      filterRangeMinPrice.textContent = MIN_PRICE;
-    }
-    showCardsInPriceRange();
-  }
-  function getClosest(position) {
-    var minPos = filterRangeMin.offsetLeft + RANGE_OFFSET;
-    var maxPos = filterRangeMax.offsetLeft + RANGE_OFFSET;
-    var half = (maxPos - minPos) / 2;
-    if (position >= maxPos) {
-      return filterRangeMax;
-    }
-    if (position <= minPos) {
-      return filterRangeMin;
-    }
-    if (position + half < maxPos) {
-      return filterRangeMin;
-    }
-    return filterRangeMax;
-  }
-  function renderCards(ids) {
-    var cards = document.querySelectorAll('.catalog__card');
-    for (var i = 0; i < cards.length; i++) {
-      cards[i].style.display = 'none';
-    }
-    for (var j = 0; j < ids.length; j++) {
-      var index = ids[j];
-      cards[index].style.display = 'block';
-    }
-  }
-  function showAllCards() {
-    document.querySelectorAll('.catalog__card').forEach(function (item) {
-      item.style.display = 'block';
     });
+    return minPrice;
   }
-  function showCardsInPriceRange() {
-    var prices = [];
-    document.querySelectorAll('.card__price').forEach(function (item) {
-      prices.push(parseInt(item.textContent.split(' ')[0], 10));
+  function getMaxPrice(list) {
+    var maxPrice = list[0].price;
+    list.forEach(function (item) {
+      if (item.price >= maxPrice) {
+        maxPrice = item.price;
+      }
     });
+    return maxPrice;
+  }
+  function getGoodsInRange(list) {
     var ids = [];
     var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
     var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
-    prices.forEach(function (price, index) {
-      if (price >= minPrice && price <= maxPrice) {
-        ids.push(index);
+    list.forEach(function (item) {
+      if (item.price >= minPrice && item.price <= maxPrice) {
+        ids.push(item.id);
       }
+    });
+    return ids;
+  }
+  function renderCards(ids) {
+    var catalogCards = catalog.querySelectorAll('.catalog__card');
+    catalogCards.forEach(function (card) {
+      card.style.display = 'none';
     });
     if (ids.length === 0) {
       window.filters.showMessage();
-    } else {
-      window.filters.hideMessage();
-    }
-    renderCards(ids);
-    filterRangeCount.textContent = ids.length;
-  }
-
-  //  favourites filter
-  function onFilterFavsClick(evt) {
-    showAllCards();
-    var target = evt.target;
-    if (target.checked) {
-      var ids = [];
-      catalog.querySelectorAll('.catalog__card').forEach(function (item, index) {
-        if (item.classList.contains('favorite')) {
-          ids.push(index);
-        }
-      });
-      if (ids.length === 0) {
-        window.filters.showMessage();
-      }
-      renderCards(ids);
-      filterFavsCount.textContent = '(' + ids.length + ')';
       return;
     }
     window.filters.hideMessage();
-    showAllCards();
+    ids.forEach(function (id) {
+      catalogCards[id].style.display = 'block';
+    });
   }
-
-  var filterFavs = document.querySelector('#filter-favorite');
-  var filterFavsCount = document.querySelector('#filter-favorite').nextElementSibling.nextElementSibling;
-  //  listener favourites
-  filterFavs.addEventListener('click', onFilterFavsClick);
-
+  function showAllCards() {
+    var catalogCards = catalog.querySelectorAll('.catalog__card');
+    catalogCards.forEach(function (item) {
+      item.style.display = 'block';
+    });
+  }
+  function updateCount(target, ids) {
+    var targetCount = target.nextElementSibling.nextElementSibling;
+    targetCount.textContent = '(' + ids.length + ')';
+  }
   //  export
   window.filters = {
-    //  message
+    init: function (goodsList) {
+      var goods = goodsList;
+      var MIN_PRICE = getMinPrice(goods);
+      var MAX_PRICE = getMaxPrice(goods);
+      var PRICES_DELTA = MAX_PRICE - MIN_PRICE;
+      var PRICE_PERCENT = MAX_PRICE / PRICES_DELTA * 100;
+      var PERCENT_DELTA = Math.round(PRICE_PERCENT - COORD_PERCENT);
+      //  listeners
+      priceRangeFilter.addEventListener('mousedown', function (evt) {
+        evt.preventDefault();
+        var target = evt.target;
+        var downEvtPos = evt.clientX;
+        var maxRange = target.classList.contains('range__btn--right');
+        var minRange = target.classList.contains('range__btn--left');
+        if (maxRange) {
+          window.slider.init(setMaxRange, target);
+        } else if (minRange) {
+          window.slider.init(setMinRange, target);
+        } else {
+          var activeBtn = getClosest(downEvtPos);
+          activeBtn.style.left = downEvtPos - BUTTON_HALF_WIDTH - RANGE_OFFSET + 'px';
+          var isMaxActive = activeBtn.classList.contains('range__btn--right');
+          if (isMaxActive) {
+            setMaxRange(activeBtn);
+          } else {
+            setMinRange(activeBtn);
+          }
+        }
+      });
+      catalogForm.addEventListener('click', onCatalogFormClick);
+      //  cb
+      function setMaxRange(targetBtn) {
+        var minCenterX = filterRangeMin.offsetLeft + BUTTON_HALF_WIDTH;
+        var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
+        var centerCoord = targetCenterX;
+        var rightLimit = (targetCenterX >= MAX) ? true : false;
+        var leftLimit = (targetCenterX <= minCenterX + BUTTON_WIDTH) ? true : false;
+        if (leftLimit) {
+          centerCoord = (minCenterX + BUTTON_WIDTH);
+          targetBtn.style.left = minCenterX + BUTTON_HALF_WIDTH + 'px';
+        }
+        if (rightLimit) {
+          centerCoord = MAX + BUTTON_HALF_WIDTH;
+          targetBtn.style.left = MAX + 'px';
+        }
+        filterRangeFill.style.right = (RANGE_WIDTH - centerCoord) / RANGE_WIDTH * 100 + '%';
+        var price = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * PRICES_DELTA;
+        filterRangeMaxPrice.textContent = Math.round(price);
+        var ids = getGoodsInRange(goods);
+        renderCards(ids);
+        filterRangeCount.textContent = ids.length;
+      }
+      function setMinRange(targetBtn) {
+        var maxCenterX = filterRangeMax.offsetLeft + BUTTON_HALF_WIDTH;
+        var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
+        var centerCoord = targetCenterX;
+        var leftLimit = (targetCenterX <= MIN + BUTTON_HALF_WIDTH) ? true : false;
+        var rightLimit = (targetCenterX >= maxCenterX - BUTTON_WIDTH) ? true : false;
+        if (rightLimit) {
+          centerCoord = maxCenterX - BUTTON_WIDTH;
+          targetBtn.style.left = maxCenterX - BUTTON_WIDTH - BUTTON_HALF_WIDTH + 'px';
+        }
+        if (leftLimit) {
+          centerCoord = MIN + BUTTON_HALF_WIDTH;
+          targetBtn.style.left = MIN + 'px';
+        }
+        filterRangeFill.style.left = centerCoord / RANGE_WIDTH * 100 + '%';
+        var price = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * PRICES_DELTA;
+        filterRangeMinPrice.textContent = Math.round(price);
+        var ids = getGoodsInRange(goods);
+        renderCards(ids);
+        filterRangeCount.textContent = ids.length;
+      }
+      function getClosest(position) {
+        var minPos = filterRangeMin.offsetLeft + RANGE_OFFSET;
+        var maxPos = filterRangeMax.offsetLeft + RANGE_OFFSET;
+        var half = (maxPos - minPos) / 2;
+        if (position >= maxPos) {
+          return filterRangeMax;
+        }
+        if (position <= minPos) {
+          return filterRangeMin;
+        }
+        if (position + half < maxPos) {
+          return filterRangeMin;
+        }
+        return filterRangeMax;
+      }
+      function onCatalogFormClick(evt) {
+        var target = evt.target;
+        if (target.classList.contains('catalog__submit')) {
+          showAllCards();
+          return;
+        }
+        var ids = [];
+        switch (target.id) {
+          case 'filter-icecream':
+            ids.concat(getGoodsByType('Мороженное'));
+            break;
+          case 'filter-soda':
+            ids.concat(getGoodsByType('Газировка'));
+            break;
+          case 'filter-gum':
+            ids.concat(getGoodsByType('Жевательная резинка'));
+            break;
+          case 'filter-marmalade':
+            ids.concat(getGoodsByType('Мармелад'));
+            break;
+          case 'filter-marshmallows':
+            ids.concat(getGoodsByType('Зефир'));
+            break;
+          case 'filter-sugar-free':
+            ids.concat(getGoodsByProp('sugar'));
+            break;
+          case 'filter-vegetarian':
+            ids.concat(getGoodsByProp('vegetarian'));
+            break;
+          case 'filter-gluten-free':
+            ids.concat(getGoodsByProp('gluten'));
+            break;
+          case 'filter-favorite':
+            ids.concat(getFavsGoods('gluten'));
+            break;
+          case 'filter-availability':
+            ids.concat(getGoodsInStock());
+            break;
+        }
+        if (target.checked) {
+          //  переделать функцию - показать карточки с ids
+          renderCards(ids);
+          updateCount(target, ids);
+        } else {
+          //  показать уже скрытые карточки, id !== currentId
+          //  скрыть сообщение
+          window.filters.hideMessage();
+          //  showAllCards();
+        }
+      }
+      function getGoodsByType(type) {
+        var ids = [];
+        goods.forEach(function (good) {
+          if (good.kind === type) {
+            ids.push(good.id);
+          }
+        });
+        return ids;
+      }
+      function getGoodsByProp(property) {
+        var ids = [];
+        if (property === 'vegetarian') {
+          goods.forEach(function (good) {
+            if (good.nutritionFacts[property]) {
+              ids.push(good.id);
+            }
+          });
+        } else {
+          goods.forEach(function (good) {
+            if (!good.nutritionFacts[property]) {
+              ids.push(good.id);
+            }
+          });
+        }
+        return ids;
+      }
+      function getFavsGoods() {
+        var catalogCards = document.querySelectorAll('.catalog__card');
+        var ids = [];
+        catalogCards.forEach(function (card, index) {
+          if (card.classList.contains('favorite')) {
+            ids.push(index);
+          }
+        });
+        return ids;
+      }
+      function getGoodsInStock() {
+        var ids = [];
+        goods.forEach(function (good) {
+          if (good.amount !== 0) {
+            ids.push(good.id);
+          }
+        });
+        return ids;
+      }
+    },
     showMessage: function () {
       var message = document.querySelector('.catalog__empty-filter');
       if (message) {

@@ -1,140 +1,87 @@
 'use strict';
 
 (function () {
-  var PATH = './img/cards/';
-  var imgSources = [
-    'gum-cedar.jpg',
-    'gum-chile.jpg',
-    'gum-eggplant.jpg',
-    'gum-mustard.jpg',
-    'gum-portwine.jpg',
-    'gum-wasabi.jpg',
-    'ice-cucumber.jpg',
-    'ice-eggplant.jpg',
-    'ice-garlic.jpg',
-    'ice-italian.jpg',
-    'ice-mushroom.jpg',
-    'ice-pig.jpg',
-    'marmalade-beer.jpg',
-    'marmalade-caviar.jpg',
-    'marmalade-corn.jpg',
-    'marmalade-new-year.jpg',
-    'marmalade-sour.jpg',
-    'marshmallow-bacon.jpg',
-    'marshmallow-beer.jpg',
-    'marshmallow-shrimp.jpg',
-    'marshmallow-spicy.jpg',
-    'marshmallow-wine.jpg',
-    'soda-bacon.jpg',
-    'soda-celery.jpg',
-    'soda-cob.jpg',
-    'soda-garlic.jpg',
-    'soda-peanut-grapes.jpg',
-    'soda-russian.jpg'
-  ];
-  var names = [
-    'Чесночные сливки',
-    'Огуречный педант',
-    'Молочная хрюша',
-    'Грибной шейк',
-    'Баклажановое безумие',
-    'Паприколу итальяно',
-    'Нинзя-удар васаби',
-    'Хитрый баклажан',
-    'Горчичный вызов',
-    'Кедровая липучка',
-    'Корманный портвейн',
-    'Чилийский задира',
-    'Беконовый взрыв',
-    'Арахис vs виноград',
-    'Сельдерейная душа',
-    'Початок в бутылке',
-    'Чернющий мистер чеснок',
-    'Раша федераша',
-    'Кислая мина',
-    'Кукурузное утро',
-    'Икорный фуршет',
-    'Новогоднее настроение',
-    'С пивком потянет',
-    'Мисс креветка',
-    'Бесконечный взрыв',
-    'Невинные винные',
-    'Бельгийское пенное',
-    'Острый язычок'
-  ];
-  var contents = [
-    'молоко',
-    'сливки',
-    'вода',
-    'пищевой краситель',
-    'патока',
-    'ароматизатор бекона',
-    'ароматизатор свинца',
-    'ароматизатор дуба, идентичный натуральному',
-    'ароматизатор картофеля',
-    'лимонная кислота',
-    'загуститель',
-    'эмульгатор',
-    'консервант: сорбат калия',
-    'посолочная смесь: соль, нитрит натрия',
-    'ксилит',
-    'карбамид',
-    'вилларибо',
-    'виллабаджо'
-  ];
-
-  function getString(items, string) {
-    var index = getNumber(items.length - 1);
-    if (string === 'picture') {
-      var path = PATH + items[index];
-      return path;
-    }
-    return items[index];
-  }
-  function getFromRange(min, max) {
-    return Math.floor(Math.random() * (max + 1 - min)) + min;
-  }
-  function getNumber(value) {
-    return Math.floor(Math.random() * (value + 1));
-  }
-  function getContents(items) {
-    var string = '';
-    var count = getFromRange(1, items.length);
-    for (var i = 0; i < count; i++) {
-      var index = getFromRange(0, items.length - 1);
-      if (i !== count - 1) {
-        string += items[index] + ', ';
-      } else {
-        string += items[index];
+  var catalogCards = document.querySelector('.catalog__cards');
+  //  export
+  window.goods = {
+    IMG_PATH: './img/cards/',
+    init: function (data) {
+      //  start
+      var goodsList = createGoods(data);
+      renderCards(goodsList);
+      catalogCards.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        onCatalogClick(evt.target, goodsList);
+      });
+      window.filters.init(goodsList);
+    },
+    getClickCard: function (item, count) {
+      var parent = item.parentNode;
+      while (count !== 1) {
+        parent = parent.parentNode;
+        count--;
+      }
+      return parent;
+    },
+    checkAvailability: function (element, good) {
+      element.classList.remove('card--in-stock');
+      element.classList.remove('card--little');
+      element.classList.remove('card--soon');
+      if (good.amount > 5) {
+        element.classList.add('card--in-stock');
+      }
+      if (good.amount >= 1 && good.amount <= 5) {
+        element.classList.add('card--little');
+      }
+      if (good.amount === 0) {
+        element.classList.add('card--soon');
+      }
+    },
+    initModal: function (target) {
+      var modalClose = target.querySelector('.modal__close');
+      modalClose.addEventListener('click', onModalCloseClick);
+      document.addEventListener('keydown', onModalEscPress);
+      function onModalEscPress(evt) {
+        if (evt.keyCode === 27) {
+          target.classList.add('modal--hidden');
+          modalClose.removeEventListener('click', onModalCloseClick);
+          document.removeEventListener('keydown', onModalEscPress);
+        }
+      }
+      function onModalCloseClick(evt) {
+        var close = evt.target;
+        close.parentElement.parentElement.classList.add('modal--hidden');
+        modalClose.removeEventListener('click', onModalCloseClick);
+        document.removeEventListener('keydown', onModalEscPress);
       }
     }
-    return string;
-  }
-  function createGoods(count) {
+  };
+  function createGoods(data) {
+    var count = data.length;
     var goods = [];
     for (var i = 0; i < count; i++) {
       goods.push({
         id: i,
-        name: getString(names),
-        picture: getString(imgSources, 'picture'),
-        amount: getNumber(20),
-        price: getFromRange(100, 1500),
-        weight: getFromRange(30, 300),
+        name: data[i].name,
+        picture: window.goods.IMG_PATH + data[i].picture,
+        amount: data[i].amount,
+        price: data[i].price,
+        weight: data[i].weight,
         rating: {
-          value: getFromRange(1, 5),
-          number: getFromRange(10, 900)
+          value: data[i].rating.value,
+          number: data[i].rating.number
         },
         nutritionFacts: {
-          sugar: !getNumber(1),
-          energy: getFromRange(70, 500),
-          contents: getContents(contents)
+          sugar: data[i].nutritionFacts.sugar,
+          gluten: data[i].nutritionFacts.gluten,
+          vegetarian: data[i].nutritionFacts.vegetarian,
+          energy: data[i].nutritionFacts.energy,
+          contents: data[i].nutritionFacts.contents
         }
       });
     }
     return goods;
   }
-
-  //  catalog cards
   function createCard(item) {
     var template = document.querySelector('#card').content.querySelector('.catalog__card');
     var content = template.cloneNode(true);
@@ -158,7 +105,14 @@
     content.querySelector('.card__composition-list').textContent = item.nutritionFacts.contents;
     return content;
   }
-
+  function renderCards(items) {
+    var fragment = document.createDocumentFragment();
+    items.forEach(function (item) {
+      fragment.appendChild(createCard(item));
+    });
+    catalogCards.appendChild(fragment);
+    return fragment;
+  }
   function checkRating(element, good) {
     var ratingElement = element.querySelector('.stars__rating');
     ratingElement.classList.remove('stars__rating--one');
@@ -192,25 +146,8 @@
       nutritionElement.textContent = 'Без сахара';
     }
   }
-  function renderCards(items) {
-    var fragment = document.createDocumentFragment();
-    items.forEach(function (item) {
-      fragment.appendChild(createCard(item));
-    });
-    catalogCards.appendChild(fragment);
-    return fragment;
-  }
   function toggleComposition(card) {
     card.querySelector('.card__composition').classList.toggle('card__composition--hidden');
-  }
-  //  loading
-  function showLoad() {
-    catalogCards.classList.add('catalog__cards--load');
-    catalogCards.querySelector('.catalog__load').classList.remove('visually-hidden');
-  }
-  function hideLoad() {
-    catalogCards.classList.remove('catalog__cards--load');
-    catalogCards.querySelector('.catalog__load').classList.add('visually-hidden');
   }
   //  favourites
   function toggleFavourite(card) {
@@ -241,9 +178,7 @@
   }
 
   //  handlers
-  function onCatalogClick(evt) {
-    evt.preventDefault();
-    var target = evt.target;
+  function onCatalogClick(target, goodsList) {
     var targetCard = window.goods.getClickCard(target, 3);
     //  click add
     if (target.classList.contains('card__btn')) {
@@ -251,7 +186,7 @@
         return;
       }
       var index = getCardIndex(targetCard);
-      window.cart.updateOrder(goodsList[index]);
+      window.cart.updateOrder(goodsList[index], goodsList);
       window.goods.checkAvailability(targetCard, goodsList[index]);
     }
     //  click favourite
@@ -270,43 +205,4 @@
       toggleComposition(targetCard);
     }
   }
-
-  //  start
-  var goodsList = createGoods(26);
-  var catalogCards = document.querySelector('.catalog__cards');
-  showLoad();
-  setTimeout(function () {
-    hideLoad();
-    renderCards(goodsList);
-  }, 2000);
-
-  //  listeners
-  catalogCards.addEventListener('click', onCatalogClick);
-
-  //  export
-  window.goods = {
-    list: goodsList,
-    checkAvailability: function (element, good) {
-      element.classList.remove('card--in-stock');
-      element.classList.remove('card--little');
-      element.classList.remove('card--soon');
-      if (good.amount > 5) {
-        element.classList.add('card--in-stock');
-      }
-      if (good.amount >= 1 && good.amount <= 5) {
-        element.classList.add('card--little');
-      }
-      if (good.amount === 0) {
-        element.classList.add('card--soon');
-      }
-    },
-    getClickCard: function (item, count) {
-      var parent = item.parentNode;
-      while (count !== 1) {
-        parent = parent.parentNode;
-        count--;
-      }
-      return parent;
-    }
-  };
 })();

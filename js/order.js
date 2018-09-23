@@ -231,10 +231,31 @@
     var target = evt.target;
     var cashMethod = paymentTabs.querySelector('input:checked').value === 'card' ? true : false;
     if (statusField.classList.contains('approved') && cashMethod) {
-      target.submit();
+      //  submit
+      var data = new FormData(form);
+      window.backend.save(data, onSave, onSaveError);
       return;
     }
     focusErrorPaymentInput(target);
+  }
+  function onSave() {
+    var successMsg = document.querySelector('.modal--success');
+    showSuccess(successMsg);
+    window.goods.initModal(successMsg);
+    //  очистить форму
+  }
+  function onSaveError(err) {
+    var errMsg = document.querySelector('.modal--error');
+    showError(err);
+    window.goods.initModal(errMsg);
+  }
+  function showError(err) {
+    var errMsg = document.querySelector('.modal--error');
+    errMsg.querySelector('.modal__message').textContent = 'Код ошибки: ' + err.match(/[\d]+/) + '.';
+    errMsg.classList.remove('modal--hidden');
+  }
+  function showSuccess(target) {
+    target.classList.remove('modal--hidden');
   }
   // start
   var paymentTabs = document.querySelector('.payment__method');
