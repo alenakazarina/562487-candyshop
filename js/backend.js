@@ -44,7 +44,6 @@
         onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
       });
       xhr.open('POST', URL);
-      xhr.setRequestHeader('Content-Type', 'multipart/form-data');
       xhr.timeout = 5000;
       xhr.send(data);
     }

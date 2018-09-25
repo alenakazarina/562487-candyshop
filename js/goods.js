@@ -2,6 +2,7 @@
 
 (function () {
   var catalogCards = document.querySelector('.catalog__cards');
+  var form = document.querySelector('.buy__form');
   //  export
   window.goods = {
     IMG_PATH: './img/cards/',
@@ -13,6 +14,7 @@
         evt.preventDefault();
         onCatalogClick(evt.target, goodsList);
       });
+      window.goods.setInputsDisabled(true);
       window.filters.init(goodsList);
     },
     getClickCard: function (item, count) {
@@ -36,6 +38,14 @@
       if (good.amount === 0) {
         element.classList.add('card--soon');
       }
+    },
+    setInputsDisabled: function (status) {
+      var inputs = form.querySelectorAll('.text-input__input');
+      var deliverText = form.querySelector('.deliver__textarea');
+      inputs.forEach(function (input) {
+        input.disabled = status;
+      });
+      deliverText.disabled = status;
     },
     initModal: function (target) {
       var modalClose = target.querySelector('.modal__close');
@@ -63,6 +73,7 @@
       goods.push({
         id: i,
         name: data[i].name,
+        kind: data[i].kind,
         picture: window.goods.IMG_PATH + data[i].picture,
         amount: data[i].amount,
         price: data[i].price,

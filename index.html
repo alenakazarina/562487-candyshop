@@ -29,7 +29,7 @@
           <ul class="catalog__filter">
             <li class="input-btn">
               <input class="input-btn__input visually-hidden input-btn__input--checkbox" name="food-type" value="icecream" type="checkbox" id="filter-icecream" >
-              <label class="input-btn__label input-btn__label--checkbox" for="filter-icecream">Мороженное</label>
+              <label class="input-btn__label input-btn__label--checkbox" for="filter-icecream">Мороженое</label>
               <span class="input-btn__item-count">(7)</span>
             </li>
 
@@ -144,7 +144,7 @@
     <section class="buy">
       <h2 class="visually-hidden">Оформление покупки</h2>
 
-      <form class="buy__form">
+      <form class="buy__form" enctype="multipart/form-data">
         <section class="goods">
           <div class="goods__wrap container">
             <h2 class="group-title goods__title" id="basket">Твои покупки</h2>
@@ -410,7 +410,7 @@
     </div>
   </section>
 
-  <section class="modal modal--hidden">
+  <section class="modal modal--success modal--hidden">
     <div class="modal__inner">
       <button class="modal__close" type="button">Закрыть окно</button>
       <h3 class="modal__title">Данные успешно отправлены!</h3>
