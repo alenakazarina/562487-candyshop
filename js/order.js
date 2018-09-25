@@ -66,7 +66,7 @@
     input.parentElement.classList.remove('text-input--error');
     input.parentElement.classList.add('text-input--correct');
   }
-  function cleanInput(input) {
+  function cleanPaymentInput(input) {
     input.parentElement.classList.remove('text-input--error');
     input.parentElement.classList.remove('text-input--correct');
   }
@@ -170,7 +170,7 @@
   }
   function onPaymentInputFocus(evt) {
     var target = evt.target;
-    cleanInput(target);
+    cleanPaymentInput(target);
     //  listener
     target.addEventListener('blur', onPaymentInputBlur);
     target.addEventListener('keydown', onPaymentInputEnterPress);
@@ -230,11 +230,42 @@
     evt.preventDefault();
     var target = evt.target;
     var cashMethod = paymentTabs.querySelector('input:checked').value === 'card' ? true : false;
-    if (statusField.classList.contains('approved') && cashMethod) {
-      target.submit();
+    if (statusField.classList.contains('approved') && cashMethod || !cashMethod) {
+      //  submit
+      var orderData = new FormData(form);
+      window.backend.save(orderData, onSave, onSaveError);
       return;
     }
     focusErrorPaymentInput(target);
+  }
+  function onSave() {
+    showSuccess();
+    cleanForm();
+    checkCardStatus();
+  }
+  function onSaveError(err) {
+    var errMsg = document.querySelector('.modal--error');
+    showError(err);
+    window.goods.initModal(errMsg);
+  }
+  function showError(err) {
+    var errMsg = document.querySelector('.modal--error');
+    errMsg.querySelector('.modal__message').textContent = 'Код ошибки: ' + err.match(/[\d]+/) + '.';
+    errMsg.classList.remove('modal--hidden');
+  }
+  function showSuccess() {
+    var successMsg = document.querySelector('.modal--success');
+    successMsg.classList.remove('modal--hidden');
+    window.goods.initModal(successMsg);
+  }
+  function cleanForm() {
+    var inputs = form.querySelectorAll('.text-input__input');
+    var deliverText = form.querySelector('.deliver__textarea');
+    inputs.forEach(function (input) {
+      input.value = '';
+      cleanPaymentInput(input);
+    });
+    deliverText.value = '';
   }
   // start
   var paymentTabs = document.querySelector('.payment__method');

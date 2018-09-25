@@ -29,7 +29,7 @@
           <ul class="catalog__filter">
             <li class="input-btn">
               <input class="input-btn__input visually-hidden input-btn__input--checkbox" name="food-type" value="icecream" type="checkbox" id="filter-icecream" >
-              <label class="input-btn__label input-btn__label--checkbox" for="filter-icecream">Мороженное</label>
+              <label class="input-btn__label input-btn__label--checkbox" for="filter-icecream">Мороженое</label>
               <span class="input-btn__item-count">(7)</span>
             </li>
 
@@ -87,8 +87,8 @@
               <button class="range__btn range__btn--right" type="button">правый ползунок</button>
             </div>
             <div class="range__prices">
-              <span class="range__price range__price--min">100</span>
-              <span class="range__price range__price--max">1500</span>
+              <span class="range__price range__price--min">0</span>
+              <span class="range__price range__price--max">100</span>
             </div>
           </section>
 
@@ -144,7 +144,7 @@
     <section class="buy">
       <h2 class="visually-hidden">Оформление покупки</h2>
 
-      <form class="buy__form">
+      <form class="buy__form" enctype="multipart/form-data">
         <section class="goods">
           <div class="goods__wrap container">
             <h2 class="group-title goods__title" id="basket">Твои покупки</h2>
@@ -401,7 +401,7 @@
     </div>
   </footer>
 
-  <section class="modal modal--hidden">
+  <section class="modal modal--error modal--hidden">
     <div class="modal__inner">
       <button class="modal__close" type="button">Закрыть окно</button>
       <h3 class="modal__title">Произошла ошибка!</h3>
@@ -410,7 +410,7 @@
     </div>
   </section>
 
-  <section class="modal modal--hidden">
+  <section class="modal modal--success modal--hidden">
     <div class="modal__inner">
       <button class="modal__close" type="button">Закрыть окно</button>
       <h3 class="modal__title">Данные успешно отправлены!</h3>
@@ -483,6 +483,8 @@
     </div>
   </template>
 <script src="js/goods.js"></script>
+<script src="js/backend.js"></script>
+<script src="js/start.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/order.js"></script>
 <script src="js/delivery.js"></script>

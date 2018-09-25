@@ -1,7 +1,44 @@
 'use strict';
 
 (function () {
-
+  var order = {
+    count: 0,
+    total: 0,
+    list: [],
+    goodCount: []
+  };
+  var cartInit = false;
+  var list = [];
+  var catalogCards = document.querySelector('.catalog__cards');
+  var goodsCards = document.querySelector('.goods__cards');
+  //  start from goods
+  window.cart = {
+    updateOrder: function (good, goodsList) {
+      if (!cartInit) {
+        list = goodsList;
+        cartInit = true;
+      }
+      addGoodsToOrder(good, 1);
+      var index = checkInOrder(good);
+      if (index !== undefined) {
+        goodsCards.querySelectorAll('.card-order__count')[index].value++;
+        order.goodCount[index]++;
+        showTotal();
+        return;
+      }
+      //  если нет в заказе
+      order.list.push(good);
+      order.goodCount.push(1);
+      hideEmptyCart();
+      renderGoodCard(good);
+      showTotal();
+      //  listeners
+      goodsCards.addEventListener('click', onOrderClick);
+      var last = order.list.length - 1;
+      var goodInput = goodsCards.querySelectorAll('.goods_card')[last].querySelector('.card-order__count');
+      goodInput.addEventListener('focus', onGoodInputFocus);
+    }
+  };
   function createGoodCard(name, imgSrc, price) {
     var template = document.querySelector('#card-order').content.querySelector('.goods_card');
     var content = template.cloneNode(true);
@@ -14,6 +51,11 @@
     //  price
     var priceElement = content.querySelector('.card-order__price');
     priceElement.textContent = price + ' ₽';
+    //  input
+    var inputElement = content.querySelector('.card-order__count');
+    var inputName = imgSrc.replace(window.goods.IMG_PATH, '').replace('.jpg', '');
+    inputElement.name = inputName;
+    inputElement.id = /[^*__]+/.exec(inputElement.id)[0] + '__' + inputName;
     return content;
   }
   function renderGoodCard(good) {
@@ -25,33 +67,33 @@
   function checkInOrder(good) {
     for (var i = 0; i < order.list.length; i++) {
       if (order.list[i].id === good.id) {
-        var index = i;
+        var j = i;
       }
     }
-    return index;
+    return j;
   }
   function addGoodsToOrder(good, count) {
     var id = good.id;
-    window.goods.list[id].amount -= count;
+    list[id].amount -= count;
     order.total += good.price * count;
     order.count += count;
     updateHeaderCart();
   }
   function removeGoodFromOrder(good) {
     var id = good.id;
-    window.goods.list[id].amount++;
+    list[id].amount++;
     order.total -= good.price;
     order.count--;
     updateHeaderCart();
   }
   function removeAllGoodsFromOrder(good, count) {
     var id = good.id;
-    var index = checkInOrder(good);
-    window.goods.list[id].amount += count;
+    var i = checkInOrder(good);
+    list[id].amount += count;
     order.total -= good.price * count;
     order.count -= count;
     order.goodCount = order.goodCount.filter(function (item, position) {
-      return position !== index;
+      return position !== i;
     });
     order.list = order.list.filter(function (item) {
       return item !== good;
@@ -93,25 +135,13 @@
   function showEmptyCart() {
     goodsCards.classList.add('goods__cards--empty');
     goodsCards.querySelector('.goods__card-empty').style.display = 'block';
-    disableOrderInputs();
+    window.goods.setInputsDisabled(true);
   }
   function hideEmptyCart() {
     goodsCards.classList.remove('goods__cards--empty');
     goodsCards.querySelector('.goods__card-empty').style.display = 'none';
     goodsCards.nextElementSibling.querySelector('.goods__order-link').classList.remove('goods__order-link--disabled');
-    removeDisabledOrderInputs();
-  }
-  function disableOrderInputs() {
-    var items = document.querySelectorAll('.contact-data__inputs input');
-    items.forEach(function (item) {
-      item.disabled = true;
-    });
-  }
-  function removeDisabledOrderInputs() {
-    var items = document.querySelectorAll('.contact-data__inputs input');
-    items.forEach(function (item) {
-      item.disabled = false;
-    });
+    window.goods.setInputsDisabled(false);
   }
   function updateHeaderCart() {
     var headerBasket = document.querySelector('.main-header__basket');
@@ -130,48 +160,47 @@
   }
   //  helpers
   function getCardIndex(card) {
-    var index = 0;
+    var j = 0;
     var cardsList = goodsCards.querySelectorAll('.goods_card');
     for (var i = 0; i < cardsList.length; i++) {
       if (card === cardsList[i]) {
-        index = i;
+        j = i;
       }
     }
-    return index;
+    return j;
   }
 
   //  handlers
   function onOrderClick(evt) {
     evt.preventDefault();
     var target = evt.target;
-
     var targetCard = window.goods.getClickCard(target, 3);
-    var goodInput = targetCard.querySelector('.card-order__count');
-    var index = getCardIndex(targetCard);
-    var good = order.list[index];
+    var countInput = targetCard.querySelector('.card-order__count');
+    var i = getCardIndex(targetCard);
+    var good = order.list[i];
     var id = good.id;
     //  клик увеличить
     if (target.classList.contains('card-order__btn--increase')) {
-      if (window.goods.list[id].amount === 0) {
+      if (list[id].amount === 0) {
         return;
       }
       addGoodsToOrder(good, 1);
       showTotal();
       window.goods.checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
-      order.goodCount[index]++;
-      targetCard.querySelector('.card-order__count').value = order.goodCount[index];
+      order.goodCount[i]++;
+      targetCard.querySelector('.card-order__count').value = order.goodCount[i];
       return;
     }
     //  клик уменьшить
     if (target.classList.contains('card-order__btn--decrease')) {
-      order.goodCount[index]--;
-      targetCard.querySelector('.card-order__count').value = order.goodCount[index];
-      if (order.goodCount[index] === 0) {
+      order.goodCount[i]--;
+      targetCard.querySelector('.card-order__count').value = order.goodCount[i];
+      if (order.goodCount[i] === 0) {
         goodsCards.removeChild(targetCard);
         removeAllGoodsFromOrder(good, 1);
         //  listeners
-        goodInput.removeEventListener('focus', onGoodInputFocus);
-        goodInput.removeEventListener('blur', onGoodInputBlur);
+        countInput.removeEventListener('focus', onGoodInputFocus);
+        countInput.removeEventListener('blur', onGoodInputBlur);
       } else {
         removeGoodFromOrder(good);
       }
@@ -186,16 +215,16 @@
     //  клик по close
     if (target.classList.contains('card-order__close')) {
       targetCard = window.goods.getClickCard(target, 1);
-      index = getCardIndex(targetCard);
-      good = order.list[index];
+      i = getCardIndex(targetCard);
+      good = order.list[i];
       id = good.id;
       goodsCards.removeChild(targetCard);
-      removeAllGoodsFromOrder(good, order.goodCount[index]);
+      removeAllGoodsFromOrder(good, order.goodCount[i]);
       window.goods.checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
       //  listeners
-      goodInput = targetCard.querySelector('.card-order__count');
-      goodInput.removeEventListener('focus', onGoodInputFocus);
-      goodInput.removeEventListener('blur', onGoodInputBlur);
+      countInput = targetCard.querySelector('.card-order__count');
+      countInput.removeEventListener('focus', onGoodInputFocus);
+      countInput.removeEventListener('blur', onGoodInputBlur);
       if (order.list.length === 0) {
         cleanOrder();
         return;
@@ -211,13 +240,13 @@
   function onGoodInputBlur(evt) {
     var target = evt.target;
     var targetCard = window.goods.getClickCard(target, 4);
-    var index = getCardIndex(targetCard);
-    var good = order.list[index];
+    var i = getCardIndex(targetCard);
+    var good = order.list[i];
     var id = good.id;
     var count = parseInt(target.value, 10);
     if (count === 0) {
       goodsCards.removeChild(targetCard);
-      removeAllGoodsFromOrder(good, order.goodCount[index]);
+      removeAllGoodsFromOrder(good, order.goodCount[i]);
       window.goods.checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
       //  listeners
       target.removeEventListener('focus', onGoodInputFocus);
@@ -230,65 +259,28 @@
       return;
     }
     if (!count) {
-      target.value = order.goodCount[index];
+      target.value = order.goodCount[i];
       return;
     }
     if (count) {
-      var deltaGoodsInOrder = count - order.goodCount[index];
+      var deltaGoodsInOrder = count - order.goodCount[i];
       var deltaGoods = 0;
       if (deltaGoodsInOrder === 0) {
-        target.value = order.goodCount[index];
+        target.value = order.goodCount[i];
         return;
       }
       if (deltaGoodsInOrder > 0) {
-        deltaGoods = window.goods.list[id].amount - deltaGoodsInOrder;
+        deltaGoods = list[id].amount - deltaGoodsInOrder;
         if (deltaGoods <= 0) {
-          target.value = order.goodCount[index];
+          target.value = order.goodCount[i];
           return;
         }
       }
       target.value = count;
-      order.goodCount[index] = count;
+      order.goodCount[i] = count;
       addGoodsToOrder(good, deltaGoodsInOrder);
       showTotal();
       window.goods.checkAvailability(catalogCards.querySelectorAll('.catalog__card')[id], good);
     }
   }
-
-  //  start
-  var catalogCards = document.querySelector('.catalog__cards');
-  var goodsCards = document.querySelector('.goods__cards');
-  var order = {
-    count: 0,
-    total: 0,
-    list: [],
-    goodCount: []
-  };
-
-  //  listeners
-  goodsCards.addEventListener('click', onOrderClick);
-
-  //  export
-  window.cart = {
-    updateOrder: function (good) {
-      addGoodsToOrder(good, 1);
-      var index = checkInOrder(good);
-      if (index !== undefined) {
-        goodsCards.querySelectorAll('.card-order__count')[index].value++;
-        order.goodCount[index]++;
-        showTotal();
-        return;
-      }
-      //  если нет в заказе
-      order.list.push(good);
-      order.goodCount.push(1);
-      hideEmptyCart();
-      renderGoodCard(good);
-      showTotal();
-      //  listeners
-      var last = order.list.length - 1;
-      var goodInput = goodsCards.querySelectorAll('.goods_card')[last].querySelector('.card-order__count');
-      goodInput.addEventListener('focus', onGoodInputFocus);
-    }
-  };
 })();
