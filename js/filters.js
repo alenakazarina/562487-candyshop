@@ -22,10 +22,19 @@
 
   var cardsState = 0;
   var basicStates = [];
-  var category = {};
-  var filters = [];
+  var Category = {};
+  var choice = [];
   var goods = [];
   var cardsFilter = {
+    getStateObj: function (names) {
+      var obj = {
+        'none': 0x00
+      };
+      names.forEach(function (name, i) {
+        obj[name] = Math.pow(2, i);
+      });
+      return obj;
+    },
     addState: function (currentState, newState) {
       return [currentState | newState];
     },
@@ -36,23 +45,29 @@
       return Boolean(currentState & state);
     }
   };
+  var inputs = catalogForm.querySelectorAll('input');
+  var inputVals = [].map.call(inputs, function (it) {
+    return it.value;
+  }).slice(0, 10);
+  inputVals.push('price');
+  var inputsMap = cardsFilter.getStateObj(inputVals);
+
   function getMinPrice(list) {
-    var minPrice = list[0].price;
-    list.forEach(function (item) {
-      if (item.price <= minPrice) {
-        minPrice = item.price;
-      }
+    var prices = list.map(function (it) {
+      return it.price;
     });
-    return minPrice;
+    return sortNumbers(prices).shift();
   }
   function getMaxPrice(list) {
-    var maxPrice = list[0].price;
-    list.forEach(function (item) {
-      if (item.price >= maxPrice) {
-        maxPrice = item.price;
-      }
+    var prices = list.map(function (it) {
+      return it.price;
     });
-    return maxPrice;
+    return sortNumbers(prices).pop();
+  }
+  function sortNumbers(its) {
+    return its.sort(function (a, b) {
+      return a - b;
+    });
   }
   function getGoodsInRange(list) {
     var ids = [];
@@ -85,15 +100,22 @@
       item.style.display = 'block';
     });
   }
-  function updateCount(target, ids) {
-    var targetCount = target.nextElementSibling.nextElementSibling;
-    targetCount.textContent = '(' + ids.length + ')';
+  function removeAllFilters(target) {
+    [].filter.call(inputs, function (input) {
+      return input !== target;
+    }).
+    forEach(function (input) {
+      input.checked = false;
+    });
+    choice = [];
+    cardsState = 0;
   }
 
   window.filters = {
     init: function (goodsList) {
       goods = goodsList;
-      categoryInit();
+      categoryInit(goods);
+      inputsCountInit();
       var MIN_PRICE = getMinPrice(goods);
       var MAX_PRICE = getMaxPrice(goods);
       var PRICES_DELTA = MAX_PRICE - MIN_PRICE;
@@ -141,7 +163,8 @@
         var price = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * PRICES_DELTA;
         filterRangeMaxPrice.textContent = Math.round(price);
         var ids = getGoodsInRange(goods);
-        renderCards(ids);
+        updateStateByPrice(ids);
+        renderCards(choice);
         filterRangeCount.textContent = ids.length;
       }
       function setMinRange(targetBtn) {
@@ -162,8 +185,48 @@
         var price = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * PRICES_DELTA;
         filterRangeMinPrice.textContent = Math.round(price);
         var ids = getGoodsInRange(goods);
-        renderCards(ids);
+        updateStateByPrice(ids);
+        renderCards(choice);
         filterRangeCount.textContent = ids.length;
+      }
+      function updateStateByPrice(ids) {
+        var filterState = inputsMap['price'];
+        var isRange = cardsFilter.hasState(cardsState, filterState);
+        if (isRange) {
+          changeRangeFilter(ids, filterState);
+        } else {
+          addRangeFilter(ids, filterState);
+        }
+        Category[filterState] = ids;
+      }
+      function addRangeFilter(ids, filterState) {
+        cardsState = cardsFilter.addState(cardsState, filterState);
+        if (choice.length === 0) {
+          choice = ids;
+        } else {
+          choice = getRepeats(choice, ids);
+        }
+        Category[cardsState] = choice;
+      }
+      function changeRangeFilter(ids, filterState) {
+        var stateWithoutRange = cardsFilter.deleteState(cardsState, filterState);
+        if (stateWithoutRange === 0) {
+          choice = ids;
+          Category[cardsState] = choice;
+          return;
+        }
+        if (Category[stateWithoutRange] !== undefined) {
+          var repeats = getRepeats(Category[stateWithoutRange], ids);
+        } else {
+          var newState = getNewState(stateWithoutRange);
+          repeats = getRepeats(newState, ids);
+        }
+        if (repeats.length !== 0) {
+          choice = repeats;
+          Category[cardsState] = choice;
+        } else {
+          choice = [];
+        }
       }
       function getClosest(position) {
         var minPos = filterRangeMin.offsetLeft + RANGE_OFFSET;
@@ -180,72 +243,110 @@
         }
         return filterRangeMax;
       }
-      function categoryInit() {
-        category['0'] = [];
-        category['1'] = getGoodsByType('Мороженое');
-        category['2'] = getGoodsByType('Газировка');
-        category['4'] = getGoodsByType('Жевательная резинка');
-        category['8'] = getGoodsByType('Мармелад');
-        category['16'] = getGoodsByType('Зефир');
-        category['32'] = getGoodsByProp('sugar');
-        category['64'] = getGoodsByProp('vegetarian');
-        category['128'] = getGoodsByProp('gluten');
-        category['255'] = getAllGoods();
-        for (var key in category) {
-          if (key !== 0 && key !== 255) {
+      function categoryInit(items) {
+        Category['0'] = [];
+        Category['1'] = getGoodsByType('Мороженое');
+        Category['2'] = getGoodsByType('Газировка');
+        Category['4'] = getGoodsByType('Жевательная резинка');
+        Category['8'] = getGoodsByType('Мармелад');
+        Category['16'] = getGoodsByType('Зефир');
+        Category['32'] = getGoodsByProp('sugar');
+        Category['64'] = getGoodsByProp('vegetarian');
+        Category['128'] = getGoodsByProp('gluten');
+        Category['256'] = getFavsGoods();
+        Category['512'] = getGoodsInStock();
+        Category['1024'] = getGoodsInRange(items);
+        Category['2047'] = getAllGoods();
+        for (var key in Category) {
+          if (key !== 0 && key !== 2047) {
             basicStates.push(key);
           }
         }
       }
+      function inputsCountInit() {
+        inputs.forEach(function (input, i) {
+          if (i < 10) {
+            var ids = Category[inputsMap[input.value]];
+            var targetCount = input.nextElementSibling.nextElementSibling;
+            targetCount.textContent = '(' + ids.length + ')';
+          }
+        });
+        filterRangeCount.textContent = Category[inputsMap['price']].length;
+      }
       function onCatalogFormClick(evt) {
         var target = evt.target;
+        var key = target.value;
+        var filterState = inputsMap[key];
+        var ids = Category[filterState];
+        // debugger;
         if (target.classList.contains('catalog__submit')) {
+          evt.preventDefault();
           showAllCards();
+          removeAllFilters(target);
           return;
         }
-        if (target.type === 'checkbox') {
-          var filtered = getGoodsByFilter(target);
-          var ids = filtered[0];
-          var filterState = filtered[1];
-          //  add filter
+        if (filterState < 256) {
           if (target.checked) {
-            if (filters.length !== 0) {
-              var repeats = getRepeats(filters, ids);
-              if (repeats.length !== 0) {
-                filters = repeats;
-              } else {
-                filters = filters.concat(ids);
-              }
-            } else {
-              filters = category[filterState];
-            }
-            filters = filters.sort(function (a, b) {
-              return a - b;
-            });
-            cardsState = cardsFilter.addState(cardsState, filterState);
-            if (category[cardsState] === undefined) {
-              category[cardsState] = filters;
-            }
-            renderCards(filters);
-            updateCount(target, ids);
+            addFilter(ids, filterState);
+            renderCards(choice);
           } else {
-            //  remove filter
-            cardsState = cardsFilter.deleteState(cardsState, filterState);
-            if (category[cardsState] !== undefined) {
-              filters = category[cardsState];
-            } else {
-              category[cardsState] = getNewState(cardsState);
-              filters = category[cardsState];
-            }
-            if (filters.length === 0) {
+            removeFilter(filterState);
+            if (choice.length === 0) {
               window.filters.hideMessage();
               showAllCards();
               return;
             }
-            renderCards(filters);
+            renderCards(choice);
+            return;
           }
         }
-        return;
+        if (filterState === 256 || filterState === 512) {
+          if (target.checked) {
+            removeAllFilters(target);
+            if (filterState === 256) {
+              var favourites = window.goods.checkFavouriteCount();
+              choice = favourites;
+              Category[filterState] = choice;
+            } else {
+              choice = Category[filterState];
+            }
+            cardsState = filterState;
+            renderCards(choice);
+            return;
+          } else {
+            showAllCards();
+            cardsState = 0;
+            choice = [];
+            return;
+          }
+        }
+      }
+      function addFilter(ids, filterState) {
+        if (choice.length !== 0) {
+          var repeats = getRepeats(choice, ids);
+          if (repeats.length !== 0) {
+            choice = repeats;
+          } else {
+            choice = choice.concat(ids);
+          }
+        } else {
+          choice = Category[filterState];
+        }
+        choice = sortNumbers(choice);
+        cardsState = cardsFilter.addState(cardsState, filterState);
+        if (Category[cardsState] === undefined) {
+          Category[cardsState] = choice;
+        }
+      }
+      function removeFilter(filterState) {
+        cardsState = cardsFilter.deleteState(cardsState, filterState);
+        if (Category[cardsState] !== undefined) {
+          choice = Category[cardsState];
+        } else {
+          var newState = getNewState(cardsState);
+          Category[cardsState] = newState;
+          choice = Category[cardsState];
+        }
       }
       function getRepeats(currentState, ids) {
         var stash = [];
@@ -261,68 +362,21 @@
       function getNewState(state) {
         var ids = [];
         basicStates.forEach(function (key) {
-          if (key !== 0 && key !== 255 && cardsFilter.hasState(state, key)) {
+          if (key !== 0 && key !== 512 && cardsFilter.hasState(state, key)) {
             if (ids.length !== 0) {
-              var repeats = getRepeats(ids, category[key]);
+              var repeats = getRepeats(ids, Category[key]);
               if (repeats.length !== 0) {
                 ids = repeats;
               } else {
-                ids = ids.concat(category[key]);
+                ids = ids.concat(Category[key]);
               }
             } else {
-              ids = category[key];
+              ids = Category[key];
             }
           }
         });
-        ids = ids.sort(function (a, b) {
-          return a - b;
-        });
+        ids = sortNumbers(ids);
         return ids;
-      }
-      function getGoodsByFilter(target) {
-        var ids = [];
-        var input = 0;
-        switch (target.id) {
-          case 'filter-icecream':
-            ids = category[1];
-            input = 1;
-            break;
-          case 'filter-soda':
-            ids = category[2];
-            input = 2;
-            break;
-          case 'filter-gum':
-            ids = category[4];
-            input = 4;
-            break;
-          case 'filter-marmalade':
-            ids = category[8];
-            input = 8;
-            break;
-          case 'filter-marshmallows':
-            ids = category[16];
-            input = 16;
-            break;
-          case 'filter-sugar-free':
-            ids = category[32];
-            input = 32;
-            break;
-          case 'filter-vegetarian':
-            ids = category[64];
-            input = 64;
-            break;
-          case 'filter-gluten-free':
-            ids = category[128];
-            input = 128;
-            break;
-          case 'filter-favorite':
-            ids = getFavsGoods();
-            break;
-          case 'filter-availability':
-            ids = getGoodsInStock();
-            break;
-        }
-        return [ids, input];
       }
       function getGoodsByType(type) {
         var ids = [];
