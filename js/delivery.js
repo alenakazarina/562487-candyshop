@@ -1,24 +1,26 @@
 'use strict';
 
 (function () {
-  function changeDeliveryMethod(evt) {
+  var IMG_PATH = './img/map/';
+  var deliverTabs = document.querySelector('.deliver__toggle');
+  var deliverStores = document.querySelector('.deliver__stores');
+  var deliverMap = document.querySelector('.deliver__store-map-wrap img');
+  deliverTabs.addEventListener('change', onMethodChange);
+  deliverStores.addEventListener('change', onStoresChange);
+  function onMethodChange(evt) {
     var target = evt.target;
-    target.checked = true;
     if (target.id === 'deliver__store') {
-      showDeliverStore();
+      var inputs = document.querySelectorAll('.deliver__courier input');
+      inputs.forEach(function (it) {
+        it.disabled = true;
+      });
+      document.querySelector('.deliver__textarea').disabled = true;
     }
-    if (target.id === 'deliver__courier') {
-      showDeliverCourier();
-    }
+    document.querySelector('.deliver__courier').classList.toggle('visually-hidden');
+    document.querySelector('.deliver__store').classList.toggle('visually-hidden');
   }
-  function showDeliverStore() {
-    document.querySelector('.deliver__courier').classList.add('visually-hidden');
-    document.querySelector('.deliver__store').classList.remove('visually-hidden');
+  function onStoresChange(evt) {
+    var target = evt.target;
+    deliverMap.src = IMG_PATH + target.value + '.jpg';
   }
-  function showDeliverCourier() {
-    document.querySelector('.deliver__store').classList.add('visually-hidden');
-    document.querySelector('.deliver__courier').classList.remove('visually-hidden');
-  }
-  var deliveryTabs = document.querySelector('.deliver__toggle');
-  deliveryTabs.addEventListener('click', changeDeliveryMethod);
 })();

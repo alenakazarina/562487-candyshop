@@ -245,18 +245,14 @@
   }
   function onSaveError(err) {
     var errMsg = document.querySelector('.modal--error');
-    showError(err);
-    window.goods.initModal(errMsg);
-  }
-  function showError(err) {
-    var errMsg = document.querySelector('.modal--error');
+    window.start.initModal(errMsg);
     errMsg.querySelector('.modal__message').textContent = 'Код ошибки: ' + err.match(/[\d]+/) + '.';
     errMsg.classList.remove('modal--hidden');
   }
   function showSuccess() {
     var successMsg = document.querySelector('.modal--success');
+    window.start.initModal(successMsg);
     successMsg.classList.remove('modal--hidden');
-    window.goods.initModal(successMsg);
   }
   function cleanForm() {
     var inputs = form.querySelectorAll('.text-input__input');

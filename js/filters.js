@@ -19,13 +19,23 @@
   var MAX = RANGE_WIDTH - BUTTON_WIDTH;
   var RANGE_OFFSET = priceRangeFilter.offsetLeft;
   var COORD_PERCENT = (MAX + BUTTON_HALF_WIDTH) / MAX * 100;
-
-  var cardsState = 0;
-  var basicStates = [];
   var Category = {};
-  var choice = [];
+  var price = {};
+  var ALL_CARDS;
   var goods = [];
-  var cardsFilter = {
+  var catalogTree;
+  var catalogTreeCards;
+  var filter = {
+    state: 0,
+    addState: function (state) {
+      this.state = this.state | state;
+    },
+    deleteState: function (state) {
+      this.state = this.state & ~state;
+    },
+    hasState: function (state) {
+      return Boolean(this.state & state);
+    },
     getStateObj: function (names) {
       var obj = {
         'none': 0x00
@@ -34,15 +44,6 @@
         obj[name] = Math.pow(2, i);
       });
       return obj;
-    },
-    addState: function (currentState, newState) {
-      return [currentState | newState];
-    },
-    deleteState: function (currentState, stateToDelete) {
-      return currentState & ~stateToDelete;
-    },
-    hasState: function (currentState, state) {
-      return Boolean(currentState & state);
     }
   };
   var inputs = catalogForm.querySelectorAll('input');
@@ -50,79 +51,96 @@
     return it.value;
   }).slice(0, 10);
   inputVals.push('price');
-  var inputsMap = cardsFilter.getStateObj(inputVals);
-
-  function getMinPrice(list) {
-    var prices = list.map(function (it) {
-      return it.price;
-    });
-    return sortNumbers(prices).shift();
-  }
-  function getMaxPrice(list) {
-    var prices = list.map(function (it) {
-      return it.price;
-    });
-    return sortNumbers(prices).pop();
-  }
+  var inputsMap = filter.getStateObj(inputVals);
   function sortNumbers(its) {
     return its.sort(function (a, b) {
       return a - b;
     });
   }
-  function getGoodsInRange(list) {
-    var ids = [];
-    var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
-    var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
-    list.forEach(function (item) {
-      if (item.price >= minPrice && item.price <= maxPrice) {
-        ids.push(item.id);
+  function renderCards() {
+    var show = window.debounce(function () {
+      var ids = window.filters.actuals;
+      catalog.textContent = '';
+      if (ids.length === 0) {
+        showMessage();
+        return;
       }
-    });
-    return ids;
+      var favs = Category['256'];
+      ids.forEach(function (id) {
+        var card = catalogTreeCards[id];
+        if (favs.includes(id)) {
+          card.querySelector('.card__btn-favorite').classList.add('card__btn-favorite--selected');
+        }
+        card.classList.remove('card--in-stock');
+        card.classList.remove('card--little');
+        card.classList.remove('card--soon');
+        if (window.goods.list[id].amount > 5) {
+          card.classList.add('card--in-stock');
+        }
+        if (window.goods.list[id].amount >= 1 && window.goods.list[id].amount <= 5) {
+          card.classList.add('card--little');
+        }
+        if (window.goods.list[id].amount === 0) {
+          card.classList.add('card--soon');
+        }
+        catalog.appendChild(card);
+      });
+    }, 500);
+    show();
   }
-  function renderCards(ids) {
-    var catalogCards = catalog.querySelectorAll('.catalog__card');
-    catalogCards.forEach(function (card) {
-      card.style.display = 'none';
-    });
-    if (ids.length === 0) {
-      window.filters.showMessage();
-      return;
-    }
-    window.filters.hideMessage();
-    ids.forEach(function (id) {
-      catalogCards[id].style.display = 'block';
-    });
+  function showMessage() {
+    var template = document.querySelector('#empty-filters').content;
+    var content = template.cloneNode(true);
+    catalog.appendChild(content);
   }
-  function showAllCards() {
-    var catalogCards = catalog.querySelectorAll('.catalog__card');
-    catalogCards.forEach(function (item) {
-      item.style.display = 'block';
-    });
-  }
-  function removeAllFilters(target) {
-    [].filter.call(inputs, function (input) {
-      return input !== target;
-    }).
-    forEach(function (input) {
-      input.checked = false;
-    });
-    choice = [];
-    cardsState = 0;
-  }
-
   window.filters = {
-    init: function (goodsList) {
-      goods = goodsList;
+    actuals: [],
+    init: function () {
+      goods = window.goods.list;
       categoryInit(goods);
       inputsCountInit();
-      var MIN_PRICE = getMinPrice(goods);
-      var MAX_PRICE = getMaxPrice(goods);
-      var PRICES_DELTA = MAX_PRICE - MIN_PRICE;
-      var PRICE_PERCENT = MAX_PRICE / PRICES_DELTA * 100;
-      var PERCENT_DELTA = Math.round(PRICE_PERCENT - COORD_PERCENT);
-
-      priceRangeFilter.addEventListener('mousedown', function (evt) {
+      window.filters.actuals = ALL_CARDS;
+      catalogTree = document.querySelector('.catalog__cards').cloneNode(true);
+      catalogTreeCards = catalogTree.querySelectorAll('.catalog__card');
+      price.min = getMinPrice(goods);
+      price.max = getMaxPrice(goods);
+      price.delta = price.max - price.min;
+      price.percent = price.max / price.delta * 100;
+      var PERCENT_DELTA = Math.round(price.percent - COORD_PERCENT);
+      priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
+      catalogForm.addEventListener('change', onFilterChange);
+      catalogForm.addEventListener('submit', function (evt) {
+        evt.preventDefault();
+        var target = evt.target;
+        onFilterSubmit(target);
+      });
+      function categoryInit() {
+        Category['0'] = [];
+        Category['1'] = getGoodsByType('Мороженое');
+        Category['2'] = getGoodsByType('Газировка');
+        Category['4'] = getGoodsByType('Жевательная резинка');
+        Category['8'] = getGoodsByType('Мармелад');
+        Category['16'] = getGoodsByType('Зефир');
+        Category['32'] = getGoodsByProp('sugar');
+        Category['64'] = getGoodsByProp('vegetarian');
+        Category['128'] = getGoodsByProp('gluten');
+        Category['256'] = [];
+        Category['512'] = getGoodsInStock();
+        Category['1024'] = getGoodsInRange();
+        Category['2047'] = getAllGoods();
+        ALL_CARDS = Category['2047'];
+      }
+      function inputsCountInit() {
+        inputs.forEach(function (input, i) {
+          if (i < 10) {
+            var ids = Category[inputsMap[input.value]];
+            var targetCount = input.nextElementSibling.nextElementSibling;
+            targetCount.textContent = '(' + ids.length + ')';
+          }
+        });
+        filterRangeCount.textContent = Category[inputsMap['price']].length;
+      }
+      function onRangeStartDrag(evt) {
         evt.preventDefault();
         var target = evt.target;
         var downEvtPos = evt.clientX;
@@ -142,9 +160,7 @@
             setMinRange(activeBtn);
           }
         }
-      });
-      catalogForm.addEventListener('click', onCatalogFormClick);
-
+      }
       function setMaxRange(targetBtn) {
         var minCenterX = filterRangeMin.offsetLeft + BUTTON_HALF_WIDTH;
         var targetCenterX = targetBtn.offsetLeft + BUTTON_HALF_WIDTH;
@@ -160,11 +176,13 @@
           targetBtn.style.left = MAX + 'px';
         }
         filterRangeFill.style.right = (RANGE_WIDTH - centerCoord) / RANGE_WIDTH * 100 + '%';
-        var price = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * PRICES_DELTA;
-        filterRangeMaxPrice.textContent = Math.round(price);
-        var ids = getGoodsInRange(goods);
-        updateStateByPrice(ids);
-        renderCards(choice);
+        var priceValue = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * price.delta;
+        filterRangeMaxPrice.textContent = Math.round(priceValue);
+        var ids = getGoodsInRange();
+        Category[inputsMap['price']] = ids;
+        filter.addState(inputsMap['price']);
+        window.filters.actuals = updateFilter();
+        renderCards();
         filterRangeCount.textContent = ids.length;
       }
       function setMinRange(targetBtn) {
@@ -182,51 +200,37 @@
           targetBtn.style.left = MIN + 'px';
         }
         filterRangeFill.style.left = centerCoord / RANGE_WIDTH * 100 + '%';
-        var price = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * PRICES_DELTA;
-        filterRangeMinPrice.textContent = Math.round(price);
-        var ids = getGoodsInRange(goods);
-        updateStateByPrice(ids);
-        renderCards(choice);
+        var priceValue = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * price.delta;
+        filterRangeMinPrice.textContent = Math.round(priceValue);
+        var ids = getGoodsInRange();
+        Category[inputsMap['price']] = ids;
+        filter.addState(inputsMap['price']);
+        window.filters.actuals = updateFilter();
+        renderCards();
         filterRangeCount.textContent = ids.length;
       }
-      function updateStateByPrice(ids) {
-        var filterState = inputsMap['price'];
-        var isRange = cardsFilter.hasState(cardsState, filterState);
-        if (isRange) {
-          changeRangeFilter(ids, filterState);
-        } else {
-          addRangeFilter(ids, filterState);
-        }
-        Category[filterState] = ids;
+      function getMinPrice() {
+        var prices = window.goods.list.map(function (it) {
+          return it.price;
+        });
+        return sortNumbers(prices).shift();
       }
-      function addRangeFilter(ids, filterState) {
-        cardsState = cardsFilter.addState(cardsState, filterState);
-        if (choice.length === 0) {
-          choice = ids;
-        } else {
-          choice = getRepeats(choice, ids);
-        }
-        Category[cardsState] = choice;
+      function getMaxPrice() {
+        var prices = window.goods.list.map(function (it) {
+          return it.price;
+        });
+        return sortNumbers(prices).pop();
       }
-      function changeRangeFilter(ids, filterState) {
-        var stateWithoutRange = cardsFilter.deleteState(cardsState, filterState);
-        if (stateWithoutRange === 0) {
-          choice = ids;
-          Category[cardsState] = choice;
-          return;
-        }
-        if (Category[stateWithoutRange] !== undefined) {
-          var repeats = getRepeats(Category[stateWithoutRange], ids);
-        } else {
-          var newState = getNewState(stateWithoutRange);
-          repeats = getRepeats(newState, ids);
-        }
-        if (repeats.length !== 0) {
-          choice = repeats;
-          Category[cardsState] = choice;
-        } else {
-          choice = [];
-        }
+      function getGoodsInRange() {
+        var ids = [];
+        var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
+        var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
+        window.goods.list.forEach(function (it, i) {
+          if (it.price >= minPrice && it.price <= maxPrice) {
+            ids.push(i);
+          }
+        });
+        return ids;
       }
       function getClosest(position) {
         var minPos = filterRangeMin.offsetLeft + RANGE_OFFSET;
@@ -243,146 +247,161 @@
         }
         return filterRangeMax;
       }
-      function categoryInit(items) {
-        Category['0'] = [];
-        Category['1'] = getGoodsByType('Мороженое');
-        Category['2'] = getGoodsByType('Газировка');
-        Category['4'] = getGoodsByType('Жевательная резинка');
-        Category['8'] = getGoodsByType('Мармелад');
-        Category['16'] = getGoodsByType('Зефир');
-        Category['32'] = getGoodsByProp('sugar');
-        Category['64'] = getGoodsByProp('vegetarian');
-        Category['128'] = getGoodsByProp('gluten');
-        Category['256'] = getFavsGoods();
-        Category['512'] = getGoodsInStock();
-        Category['1024'] = getGoodsInRange(items);
-        Category['2047'] = getAllGoods();
-        for (var key in Category) {
-          if (key !== 0 && key !== 2047) {
-            basicStates.push(key);
-          }
-        }
-      }
-      function inputsCountInit() {
-        inputs.forEach(function (input, i) {
-          if (i < 10) {
-            var ids = Category[inputsMap[input.value]];
-            var targetCount = input.nextElementSibling.nextElementSibling;
-            targetCount.textContent = '(' + ids.length + ')';
+      function onFilterSubmit(target) {
+        setAllFilters(target, true);
+        inputs.forEach(function (it) {
+          if (it.value === 'popular') {
+            it.checked = true;
           }
         });
-        filterRangeCount.textContent = Category[inputsMap['price']].length;
+        filter.state = 0;
+        window.filters.actuals = ALL_CARDS;
+        renderCards();
       }
-      function onCatalogFormClick(evt) {
+      function onFilterChange(evt) {
         var target = evt.target;
-        var key = target.value;
-        var filterState = inputsMap[key];
-        var ids = Category[filterState];
-        // debugger;
-        if (target.classList.contains('catalog__submit')) {
-          evt.preventDefault();
-          showAllCards();
-          removeAllFilters(target);
-          return;
-        }
-        if (filterState < 256) {
+        if (target.type === 'checkbox') {
+          var filterState = target.value;
+          var state = inputsMap[filterState];
           if (target.checked) {
-            addFilter(ids, filterState);
-            renderCards(choice);
-          } else {
-            removeFilter(filterState);
-            if (choice.length === 0) {
-              window.filters.hideMessage();
-              showAllCards();
-              return;
-            }
-            renderCards(choice);
-            return;
-          }
-        }
-        if (filterState === 256 || filterState === 512) {
-          if (target.checked) {
-            removeAllFilters(target);
-            if (filterState === 256) {
-              var favourites = window.goods.checkFavouriteCount();
-              choice = favourites;
-              Category[filterState] = choice;
+            if (state < 256) {
+              filter.addState(state);
             } else {
-              choice = Category[filterState];
+              setAllFilters(target, false);
+              filter.state = state;
             }
-            cardsState = filterState;
-            renderCards(choice);
-            return;
           } else {
-            showAllCards();
-            cardsState = 0;
-            choice = [];
-            return;
+            if (state < 256) {
+              filter.deleteState(state);
+            } else {
+              filter.state = 0;
+            }
+            if (state === 256 || state === 512) {
+              setAllFilters(target, true);
+            }
+          }
+          if (filter.state === 0) {
+            window.filters.actuals = ALL_CARDS;
+          } else {
+            if (Category[filter.state] === undefined) {
+              window.filters.actuals = updateFilter();
+            } else {
+              window.filters.actuals = Category[filter.state];
+            }
           }
         }
-      }
-      function addFilter(ids, filterState) {
-        if (choice.length !== 0) {
-          var repeats = getRepeats(choice, ids);
-          if (repeats.length !== 0) {
-            choice = repeats;
-          } else {
-            choice = choice.concat(ids);
-          }
-        } else {
-          choice = Category[filterState];
+        var sortType = [].filter.call(inputs, function (it) {
+          return it.type === 'radio' && it.checked;
+        })[0];
+        if (sortType.value === 'popular') {
+          window.filters.actuals = sortNumbers(window.filters.actuals);
         }
-        choice = sortNumbers(choice);
-        cardsState = cardsFilter.addState(cardsState, filterState);
-        if (Category[cardsState] === undefined) {
-          Category[cardsState] = choice;
+        if (sortType.value === 'expensive') {
+          window.filters.actuals = sortPrice(false);
         }
-      }
-      function removeFilter(filterState) {
-        cardsState = cardsFilter.deleteState(cardsState, filterState);
-        if (Category[cardsState] !== undefined) {
-          choice = Category[cardsState];
-        } else {
-          var newState = getNewState(cardsState);
-          Category[cardsState] = newState;
-          choice = Category[cardsState];
+        if (sortType.value === 'cheep') {
+          window.filters.actuals = sortPrice(true);
         }
+        if (sortType.value === 'rating') {
+          window.filters.actuals = sortRating(true);
+        }
+        renderCards();
       }
-      function getRepeats(currentState, ids) {
-        var stash = [];
-        ids.forEach(function (id) {
-          currentState.forEach(function (item) {
-            if (id === item) {
-              stash.push(id);
+      function setAllFilters(target, active) {
+        var inputsToSet = [].filter.call(inputs, function (input) {
+          return input !== target;
+        });
+        if (!active) {
+          inputsToSet.forEach(function (input, i) {
+            if (i < 8) {
+              input.checked = false;
+              input.disabled = true;
+            }
+            if (i === 8) {
+              input.checked = false;
             }
           });
-        });
-        return stash;
+          priceRangeFilter.removeEventListener('mousedown', onRangeStartDrag);
+        } else {
+          inputsToSet.forEach(function (input, i) {
+            if (i < 9) {
+              input.checked = false;
+              input.disabled = false;
+            }
+          });
+          priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
+        }
       }
-      function getNewState(state) {
+      function sortPrice(cheap) {
+        var ids = window.filters.actuals;
+        var sorted = ids.map(function (it) {
+          return {index: it, price: goods[it].price};
+        }).sort(function (a, b) {
+          return a.price - b.price;
+        }).map(function (it) {
+          return it.index;
+        });
+        if (!cheap) {
+          sorted = sorted.reverse();
+        }
+        return sorted;
+      }
+      function sortRating() {
+        var ids = window.filters.actuals;
+        var sorted = ids.map(function (i) {
+          return {
+            index: i,
+            value: goods[i].rating.value,
+            number: goods[i].rating.number
+          };
+        }).sort(function (a, b) {
+          return (b.value - a.value) || (b.number - a.number);
+        }).map(function (it) {
+          return it.index;
+        });
+        return sorted;
+      }
+      function updateFilter() {
         var ids = [];
-        basicStates.forEach(function (key) {
-          if (key !== 0 && key !== 512 && cardsFilter.hasState(state, key)) {
-            if (ids.length !== 0) {
-              var repeats = getRepeats(ids, Category[key]);
-              if (repeats.length !== 0) {
-                ids = repeats;
-              } else {
+        for (var key in Category) {
+          if (key !== 0 && key !== '2047') {
+            key = parseInt(key, 10);
+            if (filter.hasState(key)) {
+              if (key < 32) {
                 ids = ids.concat(Category[key]);
+              } else {
+                if (ids.length === 0) {
+                  ids = ids.concat(Category[key]);
+                } else {
+                  ids = getRepeats(Category[key], ids);
+                }
               }
-            } else {
-              ids = Category[key];
             }
           }
+        }
+        return sortNumbers(ids);
+      }
+      function getRepeats(arr1, arr2) {
+        var i;
+        var ids = [];
+        if (arr1.length === 0 && arr2.length === 0) {
+          return [];
+        }
+        arr1.forEach(function (it) {
+          i = arr2.indexOf(it);
+          if (i !== -1) {
+            ids.push(it);
+          }
         });
-        ids = sortNumbers(ids);
-        return ids;
+        return ids.sort(function (a, b) {
+          return a - b;
+        });
       }
       function getGoodsByType(type) {
         var ids = [];
-        goods.forEach(function (good) {
+        window.goods.list.forEach(function (good, i) {
           if (good.kind === type) {
-            ids.push(good.id);
+            ids.push(i);
           }
         });
         return ids;
@@ -390,62 +409,69 @@
       function getGoodsByProp(property) {
         var ids = [];
         if (property === 'vegetarian') {
-          goods.forEach(function (good) {
+          window.goods.list.forEach(function (good, i) {
             if (good.nutritionFacts[property]) {
-              ids.push(good.id);
+              ids.push(i);
             }
           });
         } else {
-          goods.forEach(function (good) {
+          window.goods.list.forEach(function (good, i) {
             if (!good.nutritionFacts[property]) {
-              ids.push(good.id);
+              ids.push(i);
             }
           });
         }
         return ids;
       }
-      function getFavsGoods() {
-        var catalogCards = document.querySelectorAll('.catalog__card');
-        var ids = [];
-        catalogCards.forEach(function (card, index) {
-          if (card.classList.contains('favorite')) {
-            ids.push(index);
-          }
-        });
-        return ids;
-      }
       function getGoodsInStock() {
-        var ids = [];
-        goods.forEach(function (good) {
-          if (good.amount !== 0) {
-            ids.push(good.id);
-          }
+        return window.goods.list.filter(function (good) {
+          return good.amount !== 0;
+        }).map(function (it, i) {
+          return i;
         });
-        return ids;
       }
       function getAllGoods() {
-        var ids = [];
-        goods.forEach(function (item, index) {
-          ids.push(index);
+        return window.goods.list.map(function (it, i) {
+          return i;
         });
-        return ids;
       }
     },
-    showMessage: function () {
-      var message = document.querySelector('.catalog__empty-filter');
-      if (message) {
-        message.style.display = 'block';
-        return;
+    updateFavorite: function (i) {
+      var state = window.filters.actuals;
+      var favGood = state[i];
+      var favorite = inputsMap['favorite'];
+      var inFavs = Category[favorite].includes(favGood);
+      if (inFavs) {
+        Category[favorite] = Category[favorite].filter(function (it) {
+          return it !== favGood;
+        });
+      } else {
+        Category[favorite].push(favGood);
+        if (Category[favorite].length > 1) {
+          Category[favorite] = sortNumbers(Category[favorite]);
+        }
       }
-      var template = document.querySelector('#empty-filters').content;
-      var content = template.cloneNode(true);
-      catalog.appendChild(content);
+      var filterFavsCount = document.querySelector('#filter-favorite').nextElementSibling.nextElementSibling;
+      filterFavsCount.textContent = '(' + Category['256'].length + ')';
     },
-    hideMessage: function () {
-      var message = document.querySelector('.catalog__empty-filter');
-      if (message) {
-        message.style.display = 'none';
+    updateInStock: function (i, add) {
+      var state = window.filters.actuals;
+      var available = inputsMap['availability'];
+      if (!add) {
+        var disabled = state[i];
+        Category[available] = Category[available].filter(function (it) {
+          return it !== disabled;
+        });
+      } else {
+        Category[available].push(i);
+        sortNumbers(Category[available]);
+        if (filter.state === available) {
+          window.filters.actuals = Category[available];
+          renderCards();
+        }
       }
+      var filterInStockCount = document.querySelector('#filter-availability').nextElementSibling.nextElementSibling;
+      filterInStockCount.textContent = '(' + Category['512'].length + ')';
     }
   };
 })();
