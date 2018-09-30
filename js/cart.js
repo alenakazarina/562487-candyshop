@@ -10,9 +10,9 @@
   var cartInit = false;
   var catalogCards = document.querySelector('.catalog__cards');
   var goodsCards = document.querySelector('.goods__cards');
-  //  start from goods
+
   window.cart = {
-    updateOrder: function (i) {
+    init: function (i) {
       if (!cartInit) {
         window.goods.list.forEach(function (good, index) {
           good.id = index;
@@ -21,12 +21,11 @@
       }
       var current = window.filters.actuals[i];
       var good = window.goods.list[current];
-      var targetCard = catalogCards.querySelectorAll('.catalog__card')[i];
       if (good.amount === 0) {
         return;
       }
       updateOrder(current, 1);
-      window.cart.checkAvailability(targetCard, current);
+      window.cart.checkAvailability(current);
       var index = checkInOrder(good);
       if (index !== undefined) {
         goodsCards.querySelectorAll('.card-order__count')[index].value++;
@@ -45,18 +44,26 @@
       var goodInput = goodsCards.querySelectorAll('.goods_card')[last].querySelector('.card-order__count');
       goodInput.addEventListener('focus', onGoodInputFocus);
     },
-    checkAvailability: function (card, i) {
-      card.classList.remove('card--in-stock');
-      card.classList.remove('card--little');
-      card.classList.remove('card--soon');
-      if (window.goods.list[i].amount > 5) {
-        card.classList.add('card--in-stock');
+    checkAvailability: function (i) {
+      var inState = window.filters.actuals.indexOf(i);
+      if (inState !== -1) {
+        var card = catalogCards.querySelectorAll('.catalog__card')[inState];
+        card.classList.remove('card--in-stock');
+        card.classList.remove('card--little');
+        card.classList.remove('card--soon');
+        if (window.goods.list[i].amount > 5) {
+          card.classList.add('card--in-stock');
+        }
+        if (window.goods.list[i].amount >= 1 && window.goods.list[i].amount <= 5) {
+          card.classList.add('card--little');
+        }
+        if (window.goods.list[i].amount === 0) {
+          card.classList.add('card--soon');
+        }
       }
-      if (window.goods.list[i].amount >= 1 && window.goods.list[i].amount <= 5) {
-        card.classList.add('card--little');
-      }
-      if (window.goods.list[i].amount === 0) {
-        card.classList.add('card--soon');
+      if (window.goods.list[i].amount > 0) {
+        window.filters.updateInStock(i, true);
+      } else {
         window.filters.updateInStock(i, false);
       }
     },
@@ -182,7 +189,6 @@
       updateOrder(id, -1);
       if (order.goodCount[i] === 0) {
         goodsCards.removeChild(targetCard);
-        window.filters.updateInStock(id, true);
         removeGood(i);
         countInput.removeEventListener('focus', onGoodInputFocus);
         countInput.removeEventListener('blur', onGoodInputBlur);
@@ -194,7 +200,6 @@
       id = good.id;
       updateOrder(id, -order.goodCount[i]);
       goodsCards.removeChild(targetCard);
-      window.filters.updateInStock(id, true);
       removeGood(i);
       countInput = targetCard.querySelector('.card-order__count');
       countInput.removeEventListener('focus', onGoodInputFocus);
@@ -202,12 +207,7 @@
     } else {
       return;
     }
-    var currentState = window.filters.actuals;
-    var inState = currentState.indexOf(id);
-    if (inState !== -1) {
-      var card = catalogCards.querySelectorAll('.catalog__card')[inState];
-      window.cart.checkAvailability(card, id);
-    }
+    window.cart.checkAvailability(id);
     if (order.list.length === 0) {
       cleanOrder();
       return;
@@ -227,7 +227,6 @@
     var count = parseInt(target.value, 10);
     if (count === 0) {
       goodsCards.removeChild(targetCard);
-      window.filters.updateInStock(id, true);
       updateOrder(id, -order.goodCount[i]);
       order.goodCount = order.goodCount.filter(function (item, position) {
         return position !== i;
@@ -249,7 +248,7 @@
       }
       if (deltaGoodsInOrder > 0) {
         deltaGoods = window.goods.list[id].amount - deltaGoodsInOrder;
-        if (deltaGoods <= 0) {
+        if (deltaGoods < 0) {
           target.value = order.goodCount[i];
           return;
         }
@@ -263,11 +262,6 @@
       return;
     }
     showTotal();
-    var currentState = window.filters.actuals;
-    var inState = currentState.indexOf(id);
-    if (inState !== -1) {
-      var card = catalogCards.querySelectorAll('.catalog__card')[inState];
-      window.cart.checkAvailability(card, id);
-    }
+    window.cart.checkAvailability(id);
   }
 })();

@@ -35,7 +35,7 @@
       if (targetCard.classList.contains('card--soon')) {
         return;
       }
-      window.cart.updateOrder(i);
+      window.cart.init(i);
     }
     if (target.classList.contains('card__btn-favorite')) {
       evt.preventDefault();

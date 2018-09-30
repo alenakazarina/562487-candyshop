@@ -463,8 +463,10 @@
           return it !== disabled;
         });
       } else {
-        Category[available].push(i);
-        sortNumbers(Category[available]);
+        if (!Category[available].includes(i)) {
+          Category[available].push(i);
+          sortNumbers(Category[available]);
+        }
         if (filter.state === available) {
           window.filters.actuals = Category[available];
           renderCards();
