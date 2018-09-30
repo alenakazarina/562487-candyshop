@@ -3,7 +3,14 @@
   var IMG_PATH = './img/cards/';
   var catalogCards = document.querySelector('.catalog__cards');
   var goodsCards = document.querySelector('.goods__cards');
+  //  ---------------
   var form = document.querySelector('.buy__form');
+  var deliverText = form.querySelector('.deliver__textarea');
+  var cardTab = form.querySelector('.payment [type=radio]');
+  var deliverTabs = form.querySelectorAll('.deliver__toggle [type=radio]');
+  var deliverAddress = form.querySelectorAll('.deliver__courier [type=text]');
+  var deliverStores = form.querySelectorAll('.deliver__stores [type=radio]');
+
   function createCard(item) {
     var template = document.querySelector('#card').content.querySelector('.catalog__card');
     var content = template.cloneNode(true);
@@ -100,12 +107,44 @@
       goodsCards.appendChild(goodCard);
     },
     setInputsDisabled: function (status) {
-      var inputs = form.querySelectorAll('.text-input__input');
-      var deliverText = form.querySelector('.deliver__textarea');
-      inputs.forEach(function (input) {
-        input.disabled = status;
-      });
-      deliverText.disabled = status;
+      if (status) {
+        form.querySelectorAll('input').forEach(function (it) {
+          it.disabled = true;
+        });
+        deliverText.disabled = true;
+      } else {
+        form.querySelectorAll('.contact-data input').forEach(function (it) {
+          it.disabled = false;
+        });
+        form.querySelectorAll('.payment input').forEach(function (it) {
+          it.disabled = status;
+        });
+        if (!cardTab.checked) {
+          form.querySelectorAll('.payment .text-input').forEach(function (it) {
+            it.disabled = true;
+          });
+        }
+        deliverTabs.forEach(function (it) {
+          it.disabled = false;
+        });
+        if (deliverTabs[0].checked) {
+          deliverStores.forEach(function (it) {
+            it.disabled = false;
+          });
+          deliverAddress.forEach(function (it) {
+            it.disabled = true;
+          });
+          deliverText.disabled = true;
+        } else {
+          deliverStores.forEach(function (it) {
+            it.disabled = true;
+          });
+          deliverAddress.forEach(function (it) {
+            it.disabled = false;
+          });
+          deliverText.disabled = false;
+        }
+      }
     },
   };
 })();

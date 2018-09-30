@@ -2,7 +2,23 @@
 
 (function () {
   var ENTER_KEYCODE = 13;
-  //  Luhn algorithm
+  var form = document.querySelector('.buy__form');
+  var paymentTabs = form.querySelector('.payment__method');
+  var contactInputs = form.querySelectorAll('.contact-data input');
+  var paymentInputs = form.querySelectorAll('.payment input');
+  var statusField = form.querySelector('.payment__card-status');
+
+  contactInputs.forEach(function (input) {
+    input.addEventListener('focus', onInputFocus);
+    input.addEventListener('invalid', onInputInvalid);
+  });
+  paymentTabs.addEventListener('change', onMethodChange);
+  paymentInputs.forEach(function (input) {
+    input.addEventListener('focus', onPaymentInputFocus);
+    input.addEventListener('invalid', onPaymentInputInvalid);
+  });
+  form.addEventListener('submit', onOrderFormSubmit);
+
   function checkLuhn(cardInput) {
     var cardNumber = cardInput.value;
     var digits = cardNumber.split('');
@@ -37,45 +53,6 @@
       return true;
     }
     return false;
-  }
-  //  payment method
-  function showPaymentCard() {
-    document.querySelector('.payment__cash-wrap').classList.add('visually-hidden');
-    document.querySelector('.payment__card-wrap').classList.remove('visually-hidden');
-  }
-  function showPaymentCash() {
-    document.querySelector('.payment__card-wrap').classList.add('visually-hidden');
-    document.querySelector('.payment__cash-wrap').classList.remove('visually-hidden');
-  }
-  //  payment inputs
-  function disablePaymentInputs() {
-    document.querySelectorAll('.payment__card-wrap input').forEach(function (item) {
-      item.disabled = true;
-    });
-  }
-  function removeDisabledPaymentInputs() {
-    document.querySelectorAll('.payment__card-wrap input').forEach(function (item) {
-      item.disabled = false;
-    });
-  }
-  function addInputError(input) {
-    input.parentElement.classList.remove('text-input--correct');
-    input.parentElement.classList.add('text-input--error');
-  }
-  function addInputCorrect(input) {
-    input.parentElement.classList.remove('text-input--error');
-    input.parentElement.classList.add('text-input--correct');
-  }
-  function cleanPaymentInput(input) {
-    input.parentElement.classList.remove('text-input--error');
-    input.parentElement.classList.remove('text-input--correct');
-  }
-  function checkInputValidity(input, status) {
-    if (!status) {
-      addInputError(input);
-    } else {
-      addInputCorrect(input);
-    }
   }
   function checkCardStatus() {
     var status = [];
@@ -133,7 +110,7 @@
       input.parentElement.removeChild(errorMessage);
     }
   }
-  function focusErrorPaymentInput(form) {
+  function focusErrorInput() {
     var errorInput = form.querySelector('.text-input--error input');
     if (errorInput) {
       errorInput.focus();
@@ -141,37 +118,68 @@
   }
   function validatePaymentInput(input) {
     var inputStatus = input.validity.valid;
-    checkInputValidity(input, inputStatus);
+    window.order.checkInputValidity(input, inputStatus);
     if (!inputStatus) {
       showErrorMessage(input);
     } else {
       hideErrorMessage(input);
       if (input.id === 'payment__card-number') {
         inputStatus = checkLuhn(input);
-        checkInputValidity(input, inputStatus);
+        window.order.checkInputValidity(input, inputStatus);
         if (!inputStatus) {
           showLunhErrorMessage(input);
         }
       }
     }
   }
-  //  handlers
-  function onPaymentMethodClick(evt) {
+  function onInputFocus(evt) {
     var target = evt.target;
-    target.checked = true;
-    if (target.id === 'payment__cash') {
-      showPaymentCash();
-      disablePaymentInputs();
+    window.order.cleanInput(target);
+    target.addEventListener('blur', onInputBlur);
+    target.addEventListener('keydown', onInputEnterPress);
+  }
+  function onInputBlur(evt) {
+    var target = evt.target;
+    window.order.checkInputValidity(target, target.validity.valid);
+    target.removeEventListener('keydown', onInputEnterPress);
+    target.removeEventListener('blur', onInputBlur);
+  }
+  function onInputEnterPress(evt) {
+    var target = evt.target;
+    if (evt.keyCode === ENTER_KEYCODE) {
+      evt.preventDefault();
+      window.order.checkInputValidity(target, target.validity.valid);
     }
-    if (target.id === 'payment__card') {
-      showPaymentCard();
-      removeDisabledPaymentInputs();
+  }
+  function onInputInvalid(evt) {
+    var target = evt.target;
+    if (target.id === 'contact-data__name' || target.id === 'contact-data__tel') {
+      if (target.validity.valueMissing) {
+        target.setCustomValidity('Обязательное поле');
+      } else {
+        target.setCustomValidity('');
+      }
     }
+    if (target.id === 'contact-data__email') {
+      if (target.validity.typeMismatch) {
+        target.setCustomValidity('Введите корректный email');
+      } else {
+        target.setCustomValidity('');
+      }
+    }
+  }
+  function onMethodChange(evt) {
+    var target = evt.target;
+    var flag = (target.id === 'payment__cash') ? true : false;
+    document.querySelectorAll('.payment__card-wrap input').forEach(function (it) {
+      it.disabled = flag;
+    });
+    document.querySelector('.payment__cash-wrap').classList.toggle('visually-hidden');
+    document.querySelector('.payment__card-wrap').classList.toggle('visually-hidden');
   }
   function onPaymentInputFocus(evt) {
     var target = evt.target;
-    cleanPaymentInput(target);
-    //  listener
+    window.order.cleanInput(target);
     target.addEventListener('blur', onPaymentInputBlur);
     target.addEventListener('keydown', onPaymentInputEnterPress);
   }
@@ -179,7 +187,6 @@
     var target = evt.target;
     validatePaymentInput(target);
     checkCardStatus();
-    //  listener remove
     target.removeEventListener('keydown', onPaymentInputEnterPress);
     target.removeEventListener('blur', onPaymentInputBlur);
   }
@@ -197,8 +204,8 @@
       case 'payment__card-number':
         if (target.validity.tooShort || target.validity.patternMismatch) {
           target.setCustomValidity('Введите 16 цифр номера карты без пробелов');
-        } else if (target.validity.missingValue) {
-          target.setCustomValidity('Обязательное поле.');
+        } else if (target.validity.valueMissing) {
+          target.setCustomValidity('Обязательное поле');
         } else {
           target.setCustomValidity('');
         }
@@ -206,20 +213,20 @@
       case 'payment__card-date':
         if (target.validity.tooShort || target.validity.patternMismatch) {
           target.setCustomValidity('Введите срок действия карты в формате мм/гг');
-        } else if (target.validity.missingValue) {
-          target.setCustomValidity('Обязательное поле.');
+        } else if (target.validity.valueMissing) {
+          target.setCustomValidity('Обязательное поле');
         } else {
           target.setCustomValidity('');
         }
         break;
       case 'payment__card-cvc':
-        if (target.validity.missingValue) {
-          target.setCustomValidity('Обязательное поле.');
+        if (target.validity.valueMissing) {
+          target.setCustomValidity('Обязательное поле');
         }
         break;
       case 'payment__cardholder':
-        if (target.validity.missingValue) {
-          target.setCustomValidity('Обязательное поле.');
+        if (target.validity.valueMissing) {
+          target.setCustomValidity('Обязательное поле');
         }
         break;
       default:
@@ -231,12 +238,11 @@
     var target = evt.target;
     var cashMethod = paymentTabs.querySelector('input:checked').value === 'card' ? true : false;
     if (statusField.classList.contains('approved') && cashMethod || !cashMethod) {
-      //  submit
       var orderData = new FormData(form);
       window.backend.save(orderData, onSave, onSaveError);
       return;
     }
-    focusErrorPaymentInput(target);
+    focusErrorInput(target);
   }
   function onSave() {
     showSuccess();
@@ -259,20 +265,30 @@
     var deliverText = form.querySelector('.deliver__textarea');
     inputs.forEach(function (input) {
       input.value = '';
-      cleanPaymentInput(input);
+      window.order.cleanInput(input);
     });
     deliverText.value = '';
   }
-  // start
-  var paymentTabs = document.querySelector('.payment__method');
-  var paymentInputs = document.querySelectorAll('.payment input');
-  var statusField = document.querySelector('.payment__card-status');
-  var form = document.querySelector('.buy__form');
-  //  listener
-  paymentTabs.addEventListener('click', onPaymentMethodClick);
-  paymentInputs.forEach(function (input) {
-    input.addEventListener('focus', onPaymentInputFocus);
-    input.addEventListener('invalid', onPaymentInputInvalid);
-  });
-  form.addEventListener('submit', onOrderFormSubmit);
+  window.order = {
+    //  payment method
+    addInputError: function (input) {
+      input.parentElement.classList.remove('text-input--correct');
+      input.parentElement.classList.add('text-input--error');
+    },
+    addInputCorrect: function (input) {
+      input.parentElement.classList.remove('text-input--error');
+      input.parentElement.classList.add('text-input--correct');
+    },
+    cleanInput: function (input) {
+      input.parentElement.classList.remove('text-input--error');
+      input.parentElement.classList.remove('text-input--correct');
+    },
+    checkInputValidity: function (input, status) {
+      if (!status) {
+        window.order.addInputError(input);
+      } else {
+        window.order.addInputCorrect(input);
+      }
+    }
+  };
 })();
