@@ -109,11 +109,7 @@
       var PERCENT_DELTA = Math.round(price.percent - COORD_PERCENT);
       priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
       catalogForm.addEventListener('change', onFilterChange);
-      catalogForm.addEventListener('submit', function (evt) {
-        evt.preventDefault();
-        var target = evt.target;
-        onFilterSubmit(target);
-      });
+      catalogForm.addEventListener('submit', onFilterSubmit);
       function categoryInit() {
         Category['0'] = [];
         Category['1'] = getGoodsByType('Мороженое');
@@ -247,13 +243,17 @@
         }
         return filterRangeMax;
       }
-      function onFilterSubmit(target) {
-        setAllFilters(target, true);
-        inputs.forEach(function (it) {
-          if (it.value === 'popular') {
-            it.checked = true;
+      function onFilterSubmit(evt) {
+        evt.preventDefault();
+        inputs.forEach(function (input) {
+          input.disabled = false;
+          if (input.value === 'popular') {
+            input.checked = true;
+          } else {
+            input.checked = false;
           }
         });
+        priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
         filter.state = 0;
         window.filters.actuals = ALL_CARDS;
         renderCards();
@@ -455,22 +455,20 @@
       filterFavsCount.textContent = '(' + Category['256'].length + ')';
     },
     updateInStock: function (i, add) {
-      var state = window.filters.actuals;
       var available = inputsMap['availability'];
       if (!add) {
-        var disabled = state[i];
         Category[available] = Category[available].filter(function (it) {
-          return it !== disabled;
+          return it !== i;
         });
       } else {
         if (!Category[available].includes(i)) {
           Category[available].push(i);
           sortNumbers(Category[available]);
         }
-        if (filter.state === available) {
-          window.filters.actuals = Category[available];
-          renderCards();
-        }
+      }
+      if (filter.state === available) {
+        window.filters.actuals = Category[available];
+        renderCards();
       }
       var filterInStockCount = document.querySelector('#filter-availability').nextElementSibling.nextElementSibling;
       filterInStockCount.textContent = '(' + Category['512'].length + ')';
