@@ -25,6 +25,37 @@
   var goods = [];
   var catalogTree;
   var catalogTreeCards;
+  var sort = {
+    price: function (cheap) {
+      var ids = window.filters.actuals;
+      var sorted = ids.map(function (it) {
+        return {index: it, price: goods[it].price};
+      }).sort(function (a, b) {
+        return a.price - b.price;
+      }).map(function (it) {
+        return it.index;
+      });
+      if (!cheap) {
+        sorted = sorted.reverse();
+      }
+      return sorted;
+    },
+    rating: function () {
+      var ids = window.filters.actuals;
+      var sorted = ids.map(function (i) {
+        return {
+          index: i,
+          value: goods[i].rating.value,
+          number: goods[i].rating.number
+        };
+      }).sort(function (a, b) {
+        return (b.value - a.value) || (b.number - a.number);
+      }).map(function (it) {
+        return it.index;
+      });
+      return sorted;
+    }
+  };
   var filter = {
     state: 0,
     addState: function (state) {
@@ -107,6 +138,23 @@
       price.delta = price.max - price.min;
       price.percent = price.max / price.delta * 100;
       var PERCENT_DELTA = Math.round(price.percent - COORD_PERCENT);
+      sort.check = function () {
+        var sortType = [].filter.call(inputs, function (it) {
+          return it.type === 'radio' && it.checked;
+        })[0];
+        if (sortType.value === 'popular') {
+          window.filters.actuals = sortNumbers(window.filters.actuals);
+        }
+        if (sortType.value === 'expensive') {
+          window.filters.actuals = sort.price(false);
+        }
+        if (sortType.value === 'cheep') {
+          window.filters.actuals = sort.price(true);
+        }
+        if (sortType.value === 'rating') {
+          window.filters.actuals = sort.rating(true);
+        }
+      };
       priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
       catalogForm.addEventListener('change', onFilterChange);
       catalogForm.addEventListener('submit', onFilterSubmit);
@@ -178,6 +226,7 @@
         Category[inputsMap['price']] = ids;
         filter.addState(inputsMap['price']);
         window.filters.actuals = updateFilter();
+        sort.check();
         renderCards();
         filterRangeCount.textContent = ids.length;
       }
@@ -202,6 +251,7 @@
         Category[inputsMap['price']] = ids;
         filter.addState(inputsMap['price']);
         window.filters.actuals = updateFilter();
+        sort.check();
         renderCards();
         filterRangeCount.textContent = ids.length;
       }
@@ -290,21 +340,7 @@
             }
           }
         }
-        var sortType = [].filter.call(inputs, function (it) {
-          return it.type === 'radio' && it.checked;
-        })[0];
-        if (sortType.value === 'popular') {
-          window.filters.actuals = sortNumbers(window.filters.actuals);
-        }
-        if (sortType.value === 'expensive') {
-          window.filters.actuals = sortPrice(false);
-        }
-        if (sortType.value === 'cheep') {
-          window.filters.actuals = sortPrice(true);
-        }
-        if (sortType.value === 'rating') {
-          window.filters.actuals = sortRating(true);
-        }
+        sort.check();
         renderCards();
       }
       function setAllFilters(target, active) {
@@ -331,35 +367,6 @@
           });
           priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
         }
-      }
-      function sortPrice(cheap) {
-        var ids = window.filters.actuals;
-        var sorted = ids.map(function (it) {
-          return {index: it, price: goods[it].price};
-        }).sort(function (a, b) {
-          return a.price - b.price;
-        }).map(function (it) {
-          return it.index;
-        });
-        if (!cheap) {
-          sorted = sorted.reverse();
-        }
-        return sorted;
-      }
-      function sortRating() {
-        var ids = window.filters.actuals;
-        var sorted = ids.map(function (i) {
-          return {
-            index: i,
-            value: goods[i].rating.value,
-            number: goods[i].rating.number
-          };
-        }).sort(function (a, b) {
-          return (b.value - a.value) || (b.number - a.number);
-        }).map(function (it) {
-          return it.index;
-        });
-        return sorted;
       }
       function updateFilter() {
         var ids = [];
@@ -463,11 +470,11 @@
       } else {
         if (!Category[available].includes(i)) {
           Category[available].push(i);
-          sortNumbers(Category[available]);
         }
       }
       if (filter.state === available) {
         window.filters.actuals = Category[available];
+        sort.check();
         renderCards();
       }
       var filterInStockCount = document.querySelector('#filter-availability').nextElementSibling.nextElementSibling;
