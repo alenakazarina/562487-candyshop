@@ -48,13 +48,18 @@
   }
   function onInputFocus(evt) {
     var target = evt.target;
+    Object.defineProperty(target.validity, 'valid', {
+      writable: true
+    });
+    target.validity.valid = true;
     window.order.cleanInput(target);
     target.addEventListener('blur', onInputBlur);
     target.addEventListener('keydown', onInputEnterPress);
   }
   function onInputBlur(evt) {
     var target = evt.target;
-    window.order.checkInputValidity(target, target.validity.valid);
+    var status = !target.validity.valueMissing && !target.validity.patternMismatch;
+    window.order.checkInputValidity(target, status);
     target.removeEventListener('blur', onInputBlur);
     target.removeEventListener('keydown', onInputEnterPress);
   }
@@ -62,7 +67,8 @@
     var target = evt.target;
     if (evt.keyCode === ENTER_KEYCODE) {
       evt.preventDefault();
-      window.order.checkInputValidity(target, target.validity.valid);
+      var status = target.checkValidity();
+      window.order.checkInputValidity(target, status);
     }
   }
   function onInputInvalid(evt) {

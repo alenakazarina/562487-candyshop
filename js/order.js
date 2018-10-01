@@ -7,18 +7,56 @@
   var contactInputs = form.querySelectorAll('.contact-data input');
   var paymentInputs = form.querySelectorAll('.payment input');
   var statusField = form.querySelector('.payment__card-status');
-
   contactInputs.forEach(function (input) {
     input.addEventListener('focus', onInputFocus);
     input.addEventListener('invalid', onInputInvalid);
   });
   paymentTabs.addEventListener('change', onMethodChange);
   paymentInputs.forEach(function (input) {
-    input.addEventListener('focus', onPaymentInputFocus);
+    input.addEventListener('focus', onInputFocus);
     input.addEventListener('invalid', onPaymentInputInvalid);
   });
   form.addEventListener('submit', onOrderFormSubmit);
-
+  function onInputFocus(evt) {
+    var target = evt.target;
+    Object.defineProperty(target.validity, 'valid', {
+      writable: true
+    });
+    target.validity.valid = true;
+    window.order.cleanInput(target);
+    target.addEventListener('blur', onInputBlur);
+    target.addEventListener('keydown', onInputEnterPress);
+  }
+  function onInputBlur(evt) {
+    var target = evt.target;
+    var isPayment = [].filter.call(paymentInputs, function (it) {
+      return it === target;
+    });
+    if (isPayment.length !== 0) {
+      validatePaymentInput(target);
+      checkCardStatus();
+    } else {
+      var status = !target.validity.valueMissing;
+      window.order.checkInputValidity(target, status);
+    }
+    target.removeEventListener('blur', onInputBlur);
+    target.removeEventListener('keydown', onInputEnterPress);
+  }
+  function onInputEnterPress(evt) {
+    var target = evt.target;
+    if (evt.keyCode === ENTER_KEYCODE) {
+      var isPayment = [].filter.call(paymentInputs, function (it) {
+        return it === target;
+      });
+      if (isPayment.length !== 0) {
+        validatePaymentInput(target);
+        checkCardStatus();
+      } else {
+        var status = target.checkValidity();
+        window.order.checkInputValidity(target, status);
+      }
+    }
+  }
   function checkLuhn(cardInput) {
     var cardNumber = cardInput.value;
     var digits = cardNumber.split('');
@@ -117,7 +155,7 @@
     }
   }
   function validatePaymentInput(input) {
-    var inputStatus = input.validity.valid;
+    var inputStatus = !input.validity.valueMissing && !input.validity.tooShort && !input.validity.patternMismatch;
     window.order.checkInputValidity(input, inputStatus);
     if (!inputStatus) {
       showErrorMessage(input);
@@ -130,25 +168,6 @@
           showLunhErrorMessage(input);
         }
       }
-    }
-  }
-  function onInputFocus(evt) {
-    var target = evt.target;
-    window.order.cleanInput(target);
-    target.addEventListener('blur', onInputBlur);
-    target.addEventListener('keydown', onInputEnterPress);
-  }
-  function onInputBlur(evt) {
-    var target = evt.target;
-    window.order.checkInputValidity(target, target.validity.valid);
-    target.removeEventListener('keydown', onInputEnterPress);
-    target.removeEventListener('blur', onInputBlur);
-  }
-  function onInputEnterPress(evt) {
-    var target = evt.target;
-    if (evt.keyCode === ENTER_KEYCODE) {
-      evt.preventDefault();
-      window.order.checkInputValidity(target, target.validity.valid);
     }
   }
   function onInputInvalid(evt) {
@@ -176,27 +195,6 @@
     });
     document.querySelector('.payment__cash-wrap').classList.toggle('visually-hidden');
     document.querySelector('.payment__card-wrap').classList.toggle('visually-hidden');
-  }
-  function onPaymentInputFocus(evt) {
-    var target = evt.target;
-    window.order.cleanInput(target);
-    target.addEventListener('blur', onPaymentInputBlur);
-    target.addEventListener('keydown', onPaymentInputEnterPress);
-  }
-  function onPaymentInputBlur(evt) {
-    var target = evt.target;
-    validatePaymentInput(target);
-    checkCardStatus();
-    target.removeEventListener('keydown', onPaymentInputEnterPress);
-    target.removeEventListener('blur', onPaymentInputBlur);
-  }
-  function onPaymentInputEnterPress(evt) {
-    var target = evt.target;
-    if (evt.keyCode === ENTER_KEYCODE) {
-      evt.preventDefault();
-      validatePaymentInput(target);
-      checkCardStatus();
-    }
   }
   function onPaymentInputInvalid(evt) {
     var target = evt.target;
