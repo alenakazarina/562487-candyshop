@@ -91,7 +91,7 @@
               <span class="range__price range__price--max">100</span>
             </div>
           </section>
-
+          <div id="show-all"></div>
           <ul class="catalog__filter">
             <li class="input-btn">
               <input class="input-btn__input visually-hidden input-btn__input--checkbox" name="mark" value="favorite" type="checkbox" id="filter-favorite" >
@@ -337,22 +337,22 @@
 
                 <ul class="deliver__address-entry-fields">
                   <li class="text-input deliver__street">
-                    <input type="text" class="text-input__input" name="deliver-street" id="deliver__street" placeholder="Улица">
+                    <input type="text" class="text-input__input" name="deliver-street" id="deliver__street" placeholder="Улица" required>
                     <label class="text-input__label" for="deliver__street">Улица</label>
                   </li>
 
                   <li class="text-input deliver__house">
-                    <input type="text" class="text-input__input" name="deliver-house" id="deliver__house" placeholder="Дом">
+                    <input type="text" class="text-input__input" name="deliver-house" id="deliver__house" placeholder="Дом" required>
                     <label class="text-input__label" for="deliver__house">Дом</label>
                   </li>
 
                   <li class="text-input deliver__floor">
-                    <input type="text" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт.">
+                    <input type="text" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт." pattern="[- 0-9][0-9]{1,4}">
                     <label class="text-input__label" for="deliver__floor">Эт.</label>
                   </li>
 
                   <li class="text-input deliver__room">
-                    <input type="text" class="text-input__input" name="deliver-room" id="deliver__room" placeholder="Кв.">
+                    <input type="text" class="text-input__input" name="deliver-room" id="deliver__room" placeholder="Кв." required>
                     <label class="text-input__label" for="deliver__room">Кв.</label>
                   </li>
                 </ul>
@@ -479,15 +479,18 @@
   <template id="empty-filters">
     <div class="catalog__empty-filter">
       <p><b>Хм... Что-то ты перемудрил с фильтрами.</b></p>
-      <p>Попробуй ещё раз, нажав <span class="catalog__show-all">«Показать всё»</span> или посмотри что мы предлагаем тебе попробовать.</p>
+      <p>Попробуй ещё раз, нажав <a href="#show-all" class="catalog__show-all">«Показать всё»</a> или посмотри что мы предлагаем тебе попробовать.</p>
     </div>
   </template>
+
 <script src="js/goods.js"></script>
+<script src="js/render.js"></script>
 <script src="js/backend.js"></script>
 <script src="js/start.js"></script>
 <script src="js/cart.js"></script>
 <script src="js/order.js"></script>
 <script src="js/delivery.js"></script>
+<script src="js/debounce.js"></script>
 <script src="js/slider.js"></script>
 <script src="js/filters.js"></script>
 </body>
