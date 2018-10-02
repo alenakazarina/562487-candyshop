@@ -1,5 +1,4 @@
 'use strict';
-
 (function () {
   var catalog = document.querySelector('.catalog__cards');
   var filterRange = document.querySelector('.range');
@@ -40,7 +39,7 @@
       }
       return sorted;
     },
-    rating: function () {
+    rate: function () {
       var ids = window.filters.actuals;
       var sorted = ids.map(function (i) {
         return {
@@ -105,13 +104,13 @@
         card.classList.remove('card--in-stock');
         card.classList.remove('card--little');
         card.classList.remove('card--soon');
-        if (window.goods.list[id].amount > 5) {
+        if (window.goods.items[id].amount > 5) {
           card.classList.add('card--in-stock');
         }
-        if (window.goods.list[id].amount >= 1 && window.goods.list[id].amount <= 5) {
+        if (window.goods.items[id].amount >= 1 && window.goods.items[id].amount <= 5) {
           card.classList.add('card--little');
         }
-        if (window.goods.list[id].amount === 0) {
+        if (window.goods.items[id].amount === 0) {
           card.classList.add('card--soon');
         }
         catalog.appendChild(card);
@@ -127,7 +126,7 @@
   window.filters = {
     actuals: [],
     init: function () {
-      goods = window.goods.list;
+      goods = window.goods.items;
       categoryInit(goods);
       inputsCountInit();
       window.filters.actuals = ALL_CARDS;
@@ -152,7 +151,7 @@
           window.filters.actuals = sort.price(true);
         }
         if (sortType.value === 'rating') {
-          window.filters.actuals = sort.rating(true);
+          window.filters.actuals = sort.rate(true);
         }
       };
       priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
@@ -256,13 +255,13 @@
         filterRangeCount.textContent = ids.length;
       }
       function getMinPrice() {
-        var prices = window.goods.list.map(function (it) {
+        var prices = window.goods.items.map(function (it) {
           return it.price;
         });
         return sortNumbers(prices).shift();
       }
       function getMaxPrice() {
-        var prices = window.goods.list.map(function (it) {
+        var prices = window.goods.items.map(function (it) {
           return it.price;
         });
         return sortNumbers(prices).pop();
@@ -271,7 +270,7 @@
         var ids = [];
         var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
         var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
-        window.goods.list.forEach(function (it, i) {
+        window.goods.items.forEach(function (it, i) {
           if (it.price >= minPrice && it.price <= maxPrice) {
             ids.push(i);
           }
@@ -406,7 +405,7 @@
       }
       function getGoodsByType(type) {
         var ids = [];
-        window.goods.list.forEach(function (good, i) {
+        window.goods.items.forEach(function (good, i) {
           if (good.kind === type) {
             ids.push(i);
           }
@@ -416,13 +415,13 @@
       function getGoodsByProp(property) {
         var ids = [];
         if (property === 'vegetarian') {
-          window.goods.list.forEach(function (good, i) {
+          window.goods.items.forEach(function (good, i) {
             if (good.nutritionFacts[property]) {
               ids.push(i);
             }
           });
         } else {
-          window.goods.list.forEach(function (good, i) {
+          window.goods.items.forEach(function (good, i) {
             if (!good.nutritionFacts[property]) {
               ids.push(i);
             }
@@ -431,14 +430,14 @@
         return ids;
       }
       function getGoodsInStock() {
-        return window.goods.list.filter(function (good) {
+        return window.goods.items.filter(function (good) {
           return good.amount !== 0;
         }).map(function (it, i) {
           return i;
         });
       }
       function getAllGoods() {
-        return window.goods.list.map(function (it, i) {
+        return window.goods.items.map(function (it, i) {
           return i;
         });
       }

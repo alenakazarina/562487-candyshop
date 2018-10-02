@@ -1,7 +1,6 @@
 'use strict';
 (function () {
   window.backend.load(onLoad, onLoadError);
-
   function onLoad(data) {
     window.goods.init(data);
   }
@@ -21,7 +20,7 @@
       modalClose.addEventListener('click', onModalCloseClick);
       document.addEventListener('keydown', onModalEscPress);
       function onModalEscPress(evt) {
-        if (evt.keyCode === 27) {
+        if (evt.keyCode === window.util.ESC_KEYCODE) {
           target.classList.add('modal--hidden');
           modalClose.removeEventListener('click', onModalCloseClick);
           document.removeEventListener('keydown', onModalEscPress);

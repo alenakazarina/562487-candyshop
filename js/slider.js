@@ -1,5 +1,4 @@
 'use strict';
-
 (function () {
   window.slider = {
     init: function (cb, target) {

@@ -1,7 +1,14 @@
 'use strict';
-
 (function () {
   var catalogCards = document.querySelector('.catalog__cards');
+  function showLoad() {
+    catalogCards.classList.add('catalog__cards--load');
+    catalogCards.querySelector('.catalog__load').classList.remove('visually-hidden');
+  }
+  function hideLoad() {
+    catalogCards.classList.remove('catalog__cards--load');
+    catalogCards.querySelector('.catalog__load').classList.add('visually-hidden');
+  }
   window.backend = {
     load: function (onLoad, onError) {
       showLoad();
@@ -48,13 +55,4 @@
       xhr.send(data);
     }
   };
-  //  helpers
-  function showLoad() {
-    catalogCards.classList.add('catalog__cards--load');
-    catalogCards.querySelector('.catalog__load').classList.remove('visually-hidden');
-  }
-  function hideLoad() {
-    catalogCards.classList.remove('catalog__cards--load');
-    catalogCards.querySelector('.catalog__load').classList.add('visually-hidden');
-  }
 })();

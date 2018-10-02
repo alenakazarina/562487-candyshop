@@ -1,7 +1,5 @@
 'use strict';
-
 (function () {
-  var ENTER_KEYCODE = 13;
   var form = document.querySelector('.buy__form');
   var paymentTabs = form.querySelector('.payment__method');
   var contactInputs = form.querySelectorAll('.contact-data input');
@@ -17,6 +15,15 @@
     input.addEventListener('invalid', onPaymentInputInvalid);
   });
   form.addEventListener('submit', onOrderFormSubmit);
+  function onMethodChange(evt) {
+    var target = evt.target;
+    var flag = (target.id === 'payment__cash') ? true : false;
+    document.querySelectorAll('.payment__card-wrap input').forEach(function (it) {
+      it.disabled = flag;
+    });
+    document.querySelector('.payment__cash-wrap').classList.toggle('visually-hidden');
+    document.querySelector('.payment__card-wrap').classList.toggle('visually-hidden');
+  }
   function onInputFocus(evt) {
     var target = evt.target;
     Object.defineProperty(target.validity, 'valid', {
@@ -37,6 +44,9 @@
       checkCardStatus();
     } else {
       var status = !target.validity.valueMissing;
+      if (target.type === 'email') {
+        status = !target.validity.typeMismatch;
+      }
       window.order.checkInputValidity(target, status);
     }
     target.removeEventListener('blur', onInputBlur);
@@ -44,7 +54,7 @@
   }
   function onInputEnterPress(evt) {
     var target = evt.target;
-    if (evt.keyCode === ENTER_KEYCODE) {
+    if (evt.keyCode === window.util.ENTER_KEYCODE) {
       var isPayment = [].filter.call(paymentInputs, function (it) {
         return it === target;
       });
@@ -54,6 +64,25 @@
       } else {
         var status = target.checkValidity();
         window.order.checkInputValidity(target, status);
+      }
+    }
+  }
+  function validatePaymentInput(input) {
+    var inputStatus = !input.validity.valueMissing;
+    if (input.name === 'card-number' || input.name === 'card-date') {
+      inputStatus = !input.validity.valueMissing && !input.validity.patternMismatch;
+    }
+    window.order.checkInputValidity(input, inputStatus);
+    if (!inputStatus) {
+      showErrorMessage(input);
+    } else {
+      hideErrorMessage(input);
+      if (input.id === 'payment__card-number') {
+        inputStatus = checkLuhn(input);
+        window.order.checkInputValidity(input, inputStatus);
+        if (!inputStatus) {
+          showLunhErrorMessage(input);
+        }
       }
     }
   }
@@ -148,28 +177,6 @@
       input.parentElement.removeChild(errorMessage);
     }
   }
-  function focusErrorInput() {
-    var errorInput = form.querySelector('.text-input--error input');
-    if (errorInput) {
-      errorInput.focus();
-    }
-  }
-  function validatePaymentInput(input) {
-    var inputStatus = !input.validity.valueMissing && !input.validity.tooShort && !input.validity.patternMismatch;
-    window.order.checkInputValidity(input, inputStatus);
-    if (!inputStatus) {
-      showErrorMessage(input);
-    } else {
-      hideErrorMessage(input);
-      if (input.id === 'payment__card-number') {
-        inputStatus = checkLuhn(input);
-        window.order.checkInputValidity(input, inputStatus);
-        if (!inputStatus) {
-          showLunhErrorMessage(input);
-        }
-      }
-    }
-  }
   function onInputInvalid(evt) {
     var target = evt.target;
     if (target.id === 'contact-data__name' || target.id === 'contact-data__tel') {
@@ -187,20 +194,11 @@
       }
     }
   }
-  function onMethodChange(evt) {
-    var target = evt.target;
-    var flag = (target.id === 'payment__cash') ? true : false;
-    document.querySelectorAll('.payment__card-wrap input').forEach(function (it) {
-      it.disabled = flag;
-    });
-    document.querySelector('.payment__cash-wrap').classList.toggle('visually-hidden');
-    document.querySelector('.payment__card-wrap').classList.toggle('visually-hidden');
-  }
   function onPaymentInputInvalid(evt) {
     var target = evt.target;
     switch (target.id) {
       case 'payment__card-number':
-        if (target.validity.tooShort || target.validity.patternMismatch) {
+        if (target.validity.patternMismatch) {
           target.setCustomValidity('Введите 16 цифр номера карты без пробелов');
         } else if (target.validity.valueMissing) {
           target.setCustomValidity('Обязательное поле');
@@ -209,7 +207,7 @@
         }
         break;
       case 'payment__card-date':
-        if (target.validity.tooShort || target.validity.patternMismatch) {
+        if (target.validity.patternMismatch) {
           target.setCustomValidity('Введите срок действия карты в формате мм/гг');
         } else if (target.validity.valueMissing) {
           target.setCustomValidity('Обязательное поле');
@@ -242,6 +240,12 @@
     }
     focusErrorInput(target);
   }
+  function focusErrorInput() {
+    var errorInput = form.querySelector('.text-input--error input');
+    if (errorInput) {
+      errorInput.focus();
+    }
+  }
   function onSave() {
     showSuccess();
     cleanForm();
@@ -268,7 +272,6 @@
     deliverText.value = '';
   }
   window.order = {
-    //  payment method
     addInputError: function (input) {
       input.parentElement.classList.remove('text-input--correct');
       input.parentElement.classList.add('text-input--error');
