@@ -1,16 +1,13 @@
 'use strict';
 (function () {
-  var IMG_PATH = './img/cards/';
   var catalogCards = document.querySelector('.catalog__cards');
   var goodsCards = document.querySelector('.goods__cards');
-  //  ---------------
   var form = document.querySelector('.buy__form');
   var deliverText = form.querySelector('.deliver__textarea');
   var cardTab = form.querySelector('.payment [type=radio]');
   var deliverTabs = form.querySelectorAll('.deliver__toggle [type=radio]');
   var deliverAddress = form.querySelectorAll('.deliver__courier [type=text]');
   var deliverStores = form.querySelectorAll('.deliver__stores [type=radio]');
-
   function createCard(item) {
     var template = document.querySelector('#card').content.querySelector('.catalog__card');
     var content = template.cloneNode(true);
@@ -27,7 +24,7 @@
       content.classList.add('card--soon');
     }
     var picture = content.querySelector('.card__img');
-    picture.src = IMG_PATH + item.picture;
+    picture.src = window.util.IMG_PATH + item.picture;
     picture.alt = item.name;
     content.querySelector('.card__title').textContent = item.name;
     var priceElement = content.querySelector('.card__price');
@@ -43,13 +40,13 @@
     var template = document.querySelector('#card-order').content.querySelector('.goods_card');
     var content = template.cloneNode(true);
     var picture = content.querySelector('.card-order__img');
-    picture.src = IMG_PATH + imgSrc;
+    picture.src = window.util.IMG_PATH + imgSrc;
     picture.alt = name;
     content.querySelector('.card-order__title').textContent = name;
     var priceElement = content.querySelector('.card-order__price');
     priceElement.textContent = price + ' ₽';
     var inputElement = content.querySelector('.card-order__count');
-    var inputName = imgSrc.replace(IMG_PATH, '').replace('.jpg', '');
+    var inputName = imgSrc.replace(window.util.IMG_PATH, '').replace('.jpg', '');
     inputElement.name = inputName;
     inputElement.id = /[^*__]+/.exec(inputElement.id)[0] + '__' + inputName;
     return content;

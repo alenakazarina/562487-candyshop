@@ -1,19 +1,6 @@
 'use strict';
-
 (function () {
   var catalogCards = document.querySelector('.catalog__cards');
-  window.goods = {
-    list: [],
-    init: function (data) {
-      window.goods.list = data;
-      window.render.init(data);
-      catalogCards.addEventListener('click', onCatalogClick);
-    },
-    onFavClick: function (card, i) {
-      card.querySelector('.card__btn-favorite').classList.toggle('card__btn-favorite--selected');
-      window.filters.updateFavorite(i);
-    }
-  };
   function onCompositionClick(card) {
     card.querySelector('.card__composition').classList.toggle('card__composition--hidden');
   }
@@ -45,4 +32,16 @@
       onCompositionClick(targetCard);
     }
   }
+  window.goods = {
+    items: [],
+    init: function (data) {
+      window.goods.items = data;
+      window.render.init(data);
+      catalogCards.addEventListener('click', onCatalogClick);
+    },
+    onFavClick: function (card, i) {
+      card.querySelector('.card__btn-favorite').classList.toggle('card__btn-favorite--selected');
+      window.filters.updateFavorite(i);
+    }
+  };
 })();

@@ -215,7 +215,7 @@
                 <div class="payment__inputs">
                   <div class="payment__card-group">
                     <p class="text-input text-input--light payment__input-wrap payment__input-wrap--card-number">
-                      <input type="text" class="text-input__input" name="card-number" id="payment__card-number" placeholder="Номер карты" minlength="16" maxlength="16" pattern="[0-9]{16}" required>
+                      <input type="text" class="text-input__input" name="card-number" id="payment__card-number" placeholder="Номер карты" maxlength="16" pattern="[0-9]{16}" required>
                       <label class="text-input__label" for="payment__card-number">Номер карты</label>
                     </p>
 
@@ -347,7 +347,7 @@
                   </li>
 
                   <li class="text-input deliver__floor">
-                    <input type="text" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт." pattern="[- 0-9][0-9]{1,4}">
+                    <input type="text" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт." pattern="[- 0-9]{1,4}">
                     <label class="text-input__label" for="deliver__floor">Эт.</label>
                   </li>
 
@@ -483,6 +483,7 @@
     </div>
   </template>
 
+<script src="js/util.js"></script>
 <script src="js/goods.js"></script>
 <script src="js/render.js"></script>
 <script src="js/backend.js"></script>

@@ -1,8 +1,5 @@
 'use strict';
-
 (function () {
-  var IMG_PATH = './img/map/';
-  var ENTER_KEYCODE = 13;
   var form = document.querySelector('.buy__form');
   var storeTab = form.querySelector('.deliver [type=radio]');
   var deliverMethod = form.querySelector('.deliver__toggle');
@@ -44,7 +41,7 @@
   }
   function onStoresChange(evt) {
     var target = evt.target;
-    deliverMap.src = IMG_PATH + target.value + '.jpg';
+    deliverMap.src = window.util.IMG_DELIVER_PATH + target.value + '.jpg';
   }
   function onInputFocus(evt) {
     var target = evt.target;
@@ -65,7 +62,7 @@
   }
   function onInputEnterPress(evt) {
     var target = evt.target;
-    if (evt.keyCode === ENTER_KEYCODE) {
+    if (evt.keyCode === window.util.ENTER_KEYCODE) {
       evt.preventDefault();
       var status = target.checkValidity();
       window.order.checkInputValidity(target, status);
