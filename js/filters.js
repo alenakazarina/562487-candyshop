@@ -1,5 +1,14 @@
 'use strict';
 (function () {
+  var BUTTON_WIDTH;
+  var BUTTON_HALF_WIDTH;
+  var RANGE_WIDTH;
+  var MIN;
+  var MAX;
+  var RANGE_OFFSET;
+  var COORD_PERCENT;
+  var ALL_CARDS;
+
   var catalog = document.querySelector('.catalog__cards');
   var filterRange = document.querySelector('.range');
   var filterRangeMinPrice = filterRange.querySelector('.range__price--min');
@@ -11,16 +20,15 @@
   var filterRangeFill = filterRange.querySelector('.range__fill-line');
   var catalogForm = document.querySelector('.catalog__sidebar form');
 
-  var BUTTON_WIDTH = filterRangeMin.clientWidth;
-  var BUTTON_HALF_WIDTH = BUTTON_WIDTH / 2;
-  var RANGE_WIDTH = filterRange.clientWidth;
-  var MIN = 0;
-  var MAX = RANGE_WIDTH - BUTTON_WIDTH;
-  var RANGE_OFFSET = priceRangeFilter.offsetLeft;
-  var COORD_PERCENT = (MAX + BUTTON_HALF_WIDTH) / MAX * 100;
+  BUTTON_WIDTH = filterRangeMin.clientWidth;
+  BUTTON_HALF_WIDTH = BUTTON_WIDTH / 2;
+  RANGE_WIDTH = filterRange.clientWidth;
+  MIN = 0;
+  MAX = RANGE_WIDTH - BUTTON_WIDTH;
+  RANGE_OFFSET = priceRangeFilter.offsetLeft;
+  COORD_PERCENT = (MAX + BUTTON_HALF_WIDTH) / MAX * 100;
   var Category = {};
   var price = {};
-  var ALL_CARDS;
   var goods = [];
   var catalogTree;
   var catalogTreeCards;
