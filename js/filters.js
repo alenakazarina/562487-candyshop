@@ -262,6 +262,16 @@
         renderCards();
         filterRangeCount.textContent = filteredIds.length;
       }
+      function resetRangeToDefault() {
+        filterRangeMax.style.left = MAX + 'px';
+        filterRangeMin.style.left = MIN + 'px';
+        filterRangeFill.style.left = 0 + '%';
+        filterRangeFill.style.right = 0 + '%';
+        var filteredIds = ALL_CARDS;
+        filterRangeMaxPrice.textContent = getMaxPrice();
+        filterRangeMinPrice.textContent = getMinPrice();
+        filterRangeCount.textContent = filteredIds.length;
+      }
       function getMinPrice() {
         var prices = window.goods.items.map(function (it) {
           return it.price;
@@ -364,6 +374,7 @@
               input.checked = false;
             }
           });
+          resetRangeToDefault();
           priceRangeFilter.removeEventListener('mousedown', onRangeStartDrag);
         } else {
           inputsToSet.forEach(function (input, i) {
