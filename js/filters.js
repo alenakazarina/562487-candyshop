@@ -320,6 +320,7 @@
             input.checked = false;
           }
         });
+        resetRangeToDefault();
         priceRangeFilter.addEventListener('mousedown', onRangeStartDrag);
         filter.state = 0;
         window.filters.actuals = ALL_CARDS;
