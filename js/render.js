@@ -34,6 +34,7 @@
     content.querySelector('.star__count').textContent = item.rating.number;
     checkNutrition(content, item);
     content.querySelector('.card__composition-list').textContent = item.nutritionFacts.contents;
+    content.querySelector('.card__btn').href = '#basket';
     return content;
   }
   function createGoodCard(name, imgSrc, price) {
