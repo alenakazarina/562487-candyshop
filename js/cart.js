@@ -12,10 +12,10 @@
   function checkInOrder(good) {
     for (var i = 0; i < order.items.length; i++) {
       if (order.items[i].id === good.id) {
-        var j = i;
+        return i;
       }
     }
-    return j;
+    return -1;
   }
   function updateOrder(i, count) {
     var good = window.goods.items[i];
@@ -90,24 +90,29 @@
     }
   }
   function getCardIndex(card) {
-    var j = 0;
     var cardsList = goodsCards.querySelectorAll('.goods_card');
-    for (var i = 0; i < cardsList.length; i++) {
-      if (card === cardsList[i]) {
-        j = i;
-      }
-    }
-    return j;
+    return [].map.call(cardsList, function (it) {
+      return it;
+    }).indexOf(card);
   }
   function onOrderClick(evt) {
     evt.preventDefault();
     var target = evt.target;
-    var targetCard = window.cart.getClickCard(target, 3);
+    var increase = target.classList.contains('card-order__btn--increase') ? true : false;
+    var decrease = target.classList.contains('card-order__btn--decrease') ? true : false;
+    var close = target.classList.contains('card-order__close') ? true : false;
+    if (increase || decrease) {
+      var targetCard = window.cart.getClickCard(target, 3);
+    } else if (close) {
+      targetCard = window.cart.getClickCard(target, 1);
+    } else {
+      return;
+    }
     var countInput = targetCard.querySelector('.card-order__count');
     var i = getCardIndex(targetCard);
     var good = order.items[i];
     var id = good.id;
-    if (target.classList.contains('card-order__btn--increase')) {
+    if (increase) {
       if (window.goods.items[id].amount === 0) {
         return;
       }
@@ -115,7 +120,7 @@
       showTotal();
       order.quantities[i]++;
       targetCard.querySelector('.card-order__count').value = order.quantities[i];
-    } else if (target.classList.contains('card-order__btn--decrease')) {
+    } else if (decrease) {
       order.quantities[i]--;
       targetCard.querySelector('.card-order__count').value = order.quantities[i];
       updateOrder(id, -1);
@@ -125,7 +130,7 @@
         countInput.removeEventListener('focus', onGoodInputFocus);
         countInput.removeEventListener('blur', onGoodInputBlur);
       }
-    } else if (target.classList.contains('card-order__close')) {
+    } else if (close) {
       targetCard = window.cart.getClickCard(target, 1);
       i = getCardIndex(targetCard);
       good = order.items[i];
@@ -212,7 +217,7 @@
       updateOrder(current, 1);
       window.cart.checkAvailability(current);
       var index = checkInOrder(good);
-      if (index !== undefined) {
+      if (index !== -1) {
         goodsCards.querySelectorAll('.card-order__count')[index].value++;
         order.quantities[index]++;
         showTotal();
