@@ -122,16 +122,16 @@
     return false;
   }
   function checkCardStatus() {
-    var status = [];
+    var invalids = [];
     for (var i = 0; i < paymentInputs.length; i++) {
       var input = paymentInputs[i].parentElement;
       var isError = input.classList.contains('text-input--error');
       var isEmpty = (paymentInputs[i].value === '') ? true : false;
       if (isError || isEmpty) {
-        status.push(input);
+        invalids.push(input);
       }
     }
-    if (status.length !== 0) {
+    if (invalids.length !== 0) {
       statusField.textContent = 'Неизвестен';
       statusField.classList.remove('approved');
       statusField.classList.add('unknown');

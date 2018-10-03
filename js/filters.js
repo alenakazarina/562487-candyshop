@@ -26,8 +26,8 @@
   var catalogTreeCards;
   var sort = {
     price: function (cheap) {
-      var ids = window.filters.actuals;
-      var sorted = ids.map(function (it) {
+      var currents = window.filters.actuals;
+      var sorted = currents.map(function (it) {
         return {index: it, price: goods[it].price};
       }).sort(function (a, b) {
         return a.price - b.price;
@@ -40,8 +40,8 @@
       return sorted;
     },
     rate: function () {
-      var ids = window.filters.actuals;
-      var sorted = ids.map(function (i) {
+      var currents = window.filters.actuals;
+      var sorted = currents.map(function (i) {
         return {
           index: i,
           value: goods[i].rating.value,
@@ -89,14 +89,14 @@
   }
   function renderCards() {
     var show = window.debounce(function () {
-      var ids = window.filters.actuals;
+      var currents = window.filters.actuals;
       catalog.textContent = '';
-      if (ids.length === 0) {
+      if (currents.length === 0) {
         showMessage();
         return;
       }
       var favs = Category['256'];
-      ids.forEach(function (id) {
+      currents.forEach(function (id) {
         var card = catalogTreeCards[id];
         if (favs.includes(id)) {
           card.querySelector('.card__btn-favorite').classList.add('card__btn-favorite--selected');
@@ -176,9 +176,9 @@
       function inputsCountInit() {
         inputs.forEach(function (input, i) {
           if (i < 10) {
-            var ids = Category[inputsMap[input.value]];
+            var categoryIds = Category[inputsMap[input.value]];
             var targetCount = input.nextElementSibling.nextElementSibling;
-            targetCount.textContent = '(' + ids.length + ')';
+            targetCount.textContent = '(' + categoryIds.length + ')';
           }
         });
         filterRangeCount.textContent = Category[inputsMap['price']].length;
@@ -221,13 +221,13 @@
         filterRangeFill.style.right = (RANGE_WIDTH - centerCoord) / RANGE_WIDTH * 100 + '%';
         var priceValue = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * price.delta;
         filterRangeMaxPrice.textContent = Math.round(priceValue);
-        var ids = getGoodsInRange();
-        Category[inputsMap['price']] = ids;
+        var filteredIds = getGoodsInRange();
+        Category[inputsMap['price']] = filteredIds;
         filter.addState(inputsMap['price']);
         window.filters.actuals = updateFilter();
         sort.check();
         renderCards();
-        filterRangeCount.textContent = ids.length;
+        filterRangeCount.textContent = filteredIds.length;
       }
       function setMinRange(targetBtn) {
         var maxCenterX = filterRangeMax.offsetLeft + BUTTON_HALF_WIDTH;
@@ -246,13 +246,13 @@
         filterRangeFill.style.left = centerCoord / RANGE_WIDTH * 100 + '%';
         var priceValue = (centerCoord / MAX * 100 + PERCENT_DELTA) / 100 * price.delta;
         filterRangeMinPrice.textContent = Math.round(priceValue);
-        var ids = getGoodsInRange();
-        Category[inputsMap['price']] = ids;
+        var filteredIds = getGoodsInRange();
+        Category[inputsMap['price']] = filteredIds;
         filter.addState(inputsMap['price']);
         window.filters.actuals = updateFilter();
         sort.check();
         renderCards();
-        filterRangeCount.textContent = ids.length;
+        filterRangeCount.textContent = filteredIds.length;
       }
       function getMinPrice() {
         var prices = window.goods.items.map(function (it) {
@@ -267,15 +267,15 @@
         return sortNumbers(prices).pop();
       }
       function getGoodsInRange() {
-        var ids = [];
+        var filteredIds = [];
         var minPrice = parseInt(filterRangeMinPrice.textContent, 10);
         var maxPrice = parseInt(filterRangeMaxPrice.textContent, 10);
         window.goods.items.forEach(function (it, i) {
           if (it.price >= minPrice && it.price <= maxPrice) {
-            ids.push(i);
+            filteredIds.push(i);
           }
         });
-        return ids;
+        return filteredIds;
       }
       function getClosest(position) {
         var minPos = filterRangeMin.offsetLeft + RANGE_OFFSET;
@@ -404,30 +404,30 @@
         });
       }
       function getGoodsByType(type) {
-        var ids = [];
+        var typeGoods = [];
         window.goods.items.forEach(function (good, i) {
           if (good.kind === type) {
-            ids.push(i);
+            typeGoods.push(i);
           }
         });
-        return ids;
+        return typeGoods;
       }
       function getGoodsByProp(property) {
-        var ids = [];
+        var specialGoods = [];
         if (property === 'vegetarian') {
           window.goods.items.forEach(function (good, i) {
             if (good.nutritionFacts[property]) {
-              ids.push(i);
+              specialGoods.push(i);
             }
           });
         } else {
           window.goods.items.forEach(function (good, i) {
             if (!good.nutritionFacts[property]) {
-              ids.push(i);
+              specialGoods.push(i);
             }
           });
         }
-        return ids;
+        return specialGoods;
       }
       function getGoodsInStock() {
         return window.goods.items.filter(function (good) {
