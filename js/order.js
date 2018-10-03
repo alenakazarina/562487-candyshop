@@ -68,10 +68,7 @@
     }
   }
   function validatePaymentInput(input) {
-    var inputStatus = !input.validity.valueMissing;
-    if (input.name === 'card-number' || input.name === 'card-date') {
-      inputStatus = !input.validity.valueMissing && !input.validity.patternMismatch;
-    }
+    var inputStatus = !input.validity.valueMissing && !input.validity.patternMismatch;
     window.order.checkInputValidity(input, inputStatus);
     if (!inputStatus) {
       showErrorMessage(input);
@@ -216,13 +213,19 @@
         }
         break;
       case 'payment__card-cvc':
-        if (target.validity.valueMissing) {
+        if (target.validity.patternMismatch) {
+          target.setCustomValidity('Введите 3 цифры CVC кода с обратной стороны карты');
+        } else if (target.validity.valueMissing) {
           target.setCustomValidity('Обязательное поле');
+        } else {
+          target.setCustomValidity('');
         }
         break;
       case 'payment__cardholder':
         if (target.validity.valueMissing) {
           target.setCustomValidity('Обязательное поле');
+        } else {
+          target.setCustomValidity('');
         }
         break;
       default:
@@ -241,7 +244,7 @@
     focusErrorInput(target);
   }
   function focusErrorInput() {
-    var errorInput = form.querySelector('.text-input--error input');
+    var errorInput = form.querySelector('.text-input--error input:invalid');
     if (errorInput) {
       errorInput.focus();
     }
